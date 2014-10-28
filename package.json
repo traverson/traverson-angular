@@ -1,0 +1,14 @@
+{
+  "name": "traverson-angular",
+  "version": "1.0.0",
+  "description": "AngularJS adapter for Traverson",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "traverson": "^0.10.0"
+  },
+  "author": "Bastian Krol <bastian.krol@web.de>",
+  "license": "MIT"
+}
