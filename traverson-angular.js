@@ -73,3 +73,5 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
 
   return traverson;
 });
+
+module.exports = traversonAngular;
