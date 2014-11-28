@@ -11,7 +11,7 @@
   app.controller('generalSetup', function($scope) {
     $scope.code =
       'var rootUri = \'' + rootUri + '\';<br>' +
-      'var api = traverson.json.from(rootUri);<br>'
+      'var api = traverson.json.from(rootUri);<br>';
   });
 
   app.service('apiService', function(traverson) {
@@ -47,6 +47,6 @@
       '&nbsp;&nbsp;sha: \'5c82c74583ee67eae727466179dd66c91592dd4a\'<br>' +
       ')}.then(function(resource) {<br>' +
       '&nbsp;&nbsp;// do something with the resource...<br>' +
-      '});<br>'
+      '});<br>';
   });
 })();
