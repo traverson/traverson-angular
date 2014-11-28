@@ -1,1 +1,7 @@
 node_modules
+
+browser/dist/traverson-angular.external.js
+browser/dist/traverson-angular.external.min.js
+browser/dist/traverson-angular.js
+browser/dist/traverson-angular.min.js
+browser/test/browserified_tests.js

@@ -1,0 +1,92 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>traverson-angular example</title>
+    <link rel="stylesheet" type="text/css" href="assets/bootstrap.min.css">
+    <script src="assets/jquery-2.0.2.min.js"></script>
+    <script src="assets/angular.js"></script>
+    <script src="assets/angular-sanitize.js"></script>
+    <script src="../dist/traverson-angular.js"></script>
+    <script src="traverson-angular-example.js"></script>
+  </head>
+  <body>
+    <div class="container" ng-app="traverson-angular-example">
+      <div class="jumbotron">
+        <h1>traverson-angular</h1>
+        <h2>AngularJS adapter for Traverson</h2>
+        <p><a href="https://github.com/basti1302/traverson">Traverson</a> makes
+        it easy to work with REST/HATEOAS APIs. It works in Node.js as well as
+        in the browser. <strong>traverson-angular</strong> makes it easy to
+        integrate Traverson into your AngularJS application. This example talks
+        to the local Traverson test server.</p>
+        <p>There is also the <a href="github.html">GitHub API Example</a>.</p>
+      </div>
+
+      <small>
+        <p>
+        You need to start the test server contained in the Traverson repository
+        with <tt>node bin/start-test-server.js</tt>. This serves this page as
+        well as the REST API that is used in the examples. Open the URL
+        <a href="http://localhost:2808/static/browser/example"
+        >http://localhost:2808/static/browser/example</a>
+        in your browser. If the URL in your browser's address bar says
+        <tt>file:...</tt> the examples on this page will <em>not</em> work.
+        </p>
+      </small>
+
+      <h2>Setup</h2>
+      <div ng-controller="generalSetup" ng-bind-html="code">
+        <img src="assets/spinner.gif"/>
+      </div>
+
+      <hr>
+
+      <h2>Plain Vanilla Link Following</h2>
+      <div class="row" ng-controller="plainVanillaController">
+        <div ng-bind-html="code" class="col-md-4">
+          <img src="assets/spinner.gif"/>
+        </div>
+        <div class="col-md-2">
+          <a ng-click="start()" class="btn btn-primary" role="button">Start Request</a>
+        </div>
+        <pre ng-bind="response" class="col-md-6"></pre>
+      </div>
+      <hr>
+
+      <h2>JSONPath</h3>
+      <div class="row" ng-controller="jsonPathController">
+        <div ng-bind-html="code" class="col-md-4">
+          <img src="assets/spinner.gif"/>
+        </div>
+        <div class="col-md-2">
+          <a ng-click="start()" class="btn btn-primary" role="button">Start Request</a>
+        </div>
+        <pre ng-bind="response" class="col-md-6"></pre>
+      </div>
+      <hr>
+
+      <h2>URI Templates</h2>
+      <div class="row" ng-controller="uriTemplateController">
+        <div ng-bind-html="code" class="col-md-4">
+          <img src="assets/spinner.gif"/>
+        </div>
+        <div class="col-md-2">
+          <a ng-click="start()" class="btn btn-primary" role="button">Start Request</a>
+        </div>
+        <pre ng-bind="response" class="col-md-6"></pre>
+      </div>
+      <hr>
+
+      <h2>HAL</h2>
+      <div class="row" ng-controller="jsonHalController">
+        <div ng-bind-html="code" class="col-md-4">
+          <img src="assets/spinner.gif"/>
+        </div>
+        <div class="col-md-2">
+          <a ng-click="start()" class="btn btn-primary" role="button">Start Request</a>
+        </div>
+        <pre ng-bind="response" class="col-md-6"></pre>
+      </div>
+    </div>
+  </body>
+</html>

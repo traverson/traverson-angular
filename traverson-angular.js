@@ -1,3 +1,4 @@
+/* global angular */
 'use strict';
 
 // TODO Try without browserify
@@ -12,9 +13,9 @@
 
 var traverson = require('traverson');
 
-var module = angular.module('traverson', []);
+var traversonAngular = angular.module('traverson', []);
 
-module.factory('traverson', function traversonFactory($q) {
+traversonAngular.factory('traverson', function traversonFactory($q) {
   var Builder = traverson._Builder;
   var originalMethods = {
     get: Builder.prototype.get,
@@ -40,7 +41,7 @@ module.factory('traverson', function traversonFactory($q) {
       }
     });
     return deferred.promise;
-  };
+  }
 
   Builder.prototype.get = function(callback) {
     return promisify(this, originalMethods.get, callback);

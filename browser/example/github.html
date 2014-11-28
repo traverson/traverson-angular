@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>traverson-angular example</title>
+    <link rel="stylesheet" type="text/css" href="assets/bootstrap.min.css">
+    <script src="assets/jquery-2.0.2.min.js"></script>
+    <script src="assets/angular.js"></script>
+    <script src="assets/angular-sanitize.js"></script>
+    <script src="../dist/traverson-angular.js"></script>
+    <script src="github-example.js"></script>
+  </head>
+  <body>
+    <div class="container" ng-app="traverson-angular-github-example">
+      <div class="jumbotron">
+        <h1>traverson-angular</h1>
+        <h2>AngularJS adapter for Traverson</h2>
+        <h3>Talking to the GitHub API</h3>
+        <p><a href="https://github.com/basti1302/traverson">Traverson</a> makes
+        it easy to work with REST/HATEOAS APIs. It works in Node.js as well as
+        in the browser. <strong>traverson-angular</strong> makes it easy to
+        integrate Traverson into your AngularJS application.This example talks
+        to the GitHub API - from your browser, in an AngularJS app.</p>
+        <p>There is also the
+          <a href="index.html">Traverson Test Server Example</a>.
+        </p>
+      </div>
+
+      <small>
+        <p>
+        To run this example locally, you should start the test server contained
+        in the Traverson repository with <tt>node bin/start-test-server.js</tt>.
+        This serves this page and its static assets. Then open the URL
+        <a href="http://localhost:2808/static/browser/example/github.html"
+        >http://localhost:2808/static/browser/example/github.html</a>
+        in your browser.
+        </p>
+      </small>
+
+      <h2>Setup</h2>
+      <div ng-controller="generalSetup" ng-bind-html="code">
+        <img src="assets/spinner.gif"/>
+      </div>
+
+      <hr>
+
+      <h2>Find a commit comment</h2>
+      <div class="row" ng-controller="commitCommentController">
+        <div ng-bind-html="code" class="col-md-4">
+          <img src="assets/spinner.gif"/>
+        </div>
+        <div class="col-md-2">
+          <a ng-click="start()" class="btn btn-primary" role="button">Start Request</a>
+        </div>
+        <pre ng-bind="response" class="col-md-6"></pre>
+      </div>
+    </div>
+  </body>
+</html>
