@@ -1,6 +1,6 @@
 {
   "name": "traverson-angular",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "AngularJS adapter for Traverson",
   "main": "index.js",
   "author": "Bastian Krol <bastian.krol@web.de>",
