@@ -22,26 +22,16 @@ module.exports = function(grunt) {
         '!node_modules/**/*',
         '!browser/dist/**/*',
         '!browser/example/assets/**/*',
+        '!browser/example/browserify/bundle.js',
+        '!browser/example/browserify/angular/**/*',
+        '!browser/example/browserify/node_modules/**/*',
+        '!browser/lib/**/*',
         '!browser/test/browserified_tests.js',
       ],
       options: {
         jshintrc: '.jshintrc'
       }
     },
-
-    // run the mocha tests via Node.js
-    /*
-    mochaTest: {
-      test: {
-        options: {
-          reporter: 'spec',
-          slow: 300,
-          timeout: 1000
-        },
-        src: ['test/** /*.js']
-      }
-    },
-    */
 
     // remove all previous browserified builds
     clean: {
@@ -120,7 +110,6 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  // grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
@@ -195,7 +184,6 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', [
     'jshint',
-    // 'mochaTest',
     'clean',
     'browserify',
     'uglify',

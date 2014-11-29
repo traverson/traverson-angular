@@ -1,0 +1,22 @@
+{
+  "name": "traverson-angular-browserify-example",
+  "version": "1.0.0",
+  "description": "Example how to use traverson-angular with Browserify",
+  "main": "example.js",
+  "author": "Bastian Krol <bastian.krol@web.de>",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "./browserify.sh"
+  },
+  "dependencies": {
+    "angular": "^1.3.4",
+    "angular-sanitize": "^1.3.4"
+  },
+  "browser": {
+    "angular": "./angular/angular-common-js.js"
+  },
+  "devDependencies": {
+    "browserify": "^6.3.3"
+  }
+}

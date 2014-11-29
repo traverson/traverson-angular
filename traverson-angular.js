@@ -3,7 +3,22 @@
 
 var traverson = require('traverson');
 
-var traversonAngular = angular.module('traverson', []);
+var ng;
+if (typeof angular !== 'undefined') {
+  // angular is defined globally, use this
+  ng = angular;
+} else {
+  // angular is not defined globally, try to require it
+  ng = require('angular');
+  if (typeof ng.module !== 'function') {
+    throw new Error('angular has either to be provided globally or made ' +
+        'available as a shim for browserify. (Also, if the angular module on ' +
+        'npm would actually be a proper CommonJS module, this error ' +
+        'wouldn\'t be a thing.)');
+  }
+}
+
+var traversonAngular = ng.module('traverson', []);
 
 traversonAngular.factory('traverson', function traversonFactory($q) {
   var Builder = traverson._Builder;
