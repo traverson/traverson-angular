@@ -3,7 +3,7 @@
 var angular = require('angular');
 require('angular-sanitize');
 
-var traverson = require('../../../traverson-angular');
+var traverson = require('traverson-angular');
 
 var app = angular
     .module('traverson-angular-browserify-example',
