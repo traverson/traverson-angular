@@ -65,7 +65,7 @@ If you are using npm and [Browserify](http://browserify.org/) and writing your <
 This is how your code using traverson-angular would look like:
 ```
 var angular = require('angular');
-var traverson = require('../../../traverson-angular');
+var traverson = require('traverson-angular');
 var app = angular.module('my-app', [traverson.name]);
 
 ...
