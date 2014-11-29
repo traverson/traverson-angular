@@ -54,7 +54,7 @@ angular.module('my-app').service('apiService', function(traverson) {
 
 Have a look at the examples in the repository:
 
-* <a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/index.html">Example 1</a> (<a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/traverson-angular-example.js">JavaScript here</a>) 
+* <a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/index.html">Example 1</a> (<a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/traverson-angular-example.js">JavaScript here</a>)
 * <a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/github.html">GitHub API example</a> (<a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/github-example.js">JavaScript here</a>)
 
 Using npm and Browserify
@@ -151,7 +151,7 @@ The following methods return promises:
 Release Notes
 -------------
 
-* 0.11.0 2014-11-29:
+* 0.12.0 2014-11-29:
     * Initial release
 
 License
