@@ -1,16 +1,6 @@
 /* global angular */
 'use strict';
 
-// TODO Try without browserify
-// TODO: Methods to wrap:
-// - builder#get
-// - builder#getResource
-// - builder#getUri
-// - builder#post
-// - builder#put
-// - builder#patch
-// - builder#del
-
 var traverson = require('traverson');
 
 var traversonAngular = angular.module('traverson', []);
