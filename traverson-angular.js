@@ -31,11 +31,9 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
     var deferred = $q.defer();
     originalMethod.call(that, function(err, result, uri) {
       if (err) {
-        deferred.reject({
-          error: err,
-          result: result,
-          uri: uri,
-        });
+        err.result = result;
+        err.uri = uri;
+        deferred.reject(err);
       } else {
         deferred.resolve(result);
       }

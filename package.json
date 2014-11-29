@@ -26,6 +26,7 @@
     "grunt-mocha-phantomjs": "^0.4.3",
     "grunt-mocha-test": "^0.10.2",
     "mocha": "^1.18.2",
+    "request": "^2.49.0",
     "sinon": "^1.9.1",
     "sinon-chai": "^2.5.0"
   }

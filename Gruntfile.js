@@ -1,6 +1,5 @@
 'use strict';
 
-/*
 var request = require('request')
   , testServerRootUri = 'http://127.0.0.1:2808'
   , testServerStatusUri = testServerRootUri + '/status'
@@ -8,7 +7,6 @@ var request = require('request')
   , mochaPhantomJsTestRunner = testServerRootUri +
     '/static/browser/test/index.html'
   , serverWasAlreadyRunning = false;
-*/
 
 /* jshint -W106 */
 module.exports = function(grunt) {
@@ -32,6 +30,7 @@ module.exports = function(grunt) {
     },
 
     // run the mocha tests via Node.js
+    /*
     mochaTest: {
       test: {
         options: {
@@ -39,9 +38,10 @@ module.exports = function(grunt) {
           slow: 300,
           timeout: 1000
         },
-        src: ['test/**/*.js']
+        src: ['test/** /*.js']
       }
     },
+    */
 
     // remove all previous browserified builds
     clean: {
@@ -102,7 +102,6 @@ module.exports = function(grunt) {
       }
     },
 
-    /*
     'mocha_phantomjs': {
       all: {
         options: {
@@ -112,7 +111,6 @@ module.exports = function(grunt) {
         }
       }
     },
-    */
 
     watch: {
       files: ['<%= jshint.files %>'],
@@ -122,13 +120,12 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-jshint');
-  grunt.loadNpmTasks('grunt-mocha-test');
+  // grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  // grunt.loadNpmTasks('grunt-mocha-phantomjs');
+  grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
-  /*
   grunt.registerTask('start-test-server', 'Start the test server.',
       function() {
     var done = this.async();
@@ -195,17 +192,16 @@ module.exports = function(grunt) {
       }
     });
   });
-  */
 
   grunt.registerTask('default', [
     'jshint',
-    'mochaTest',
+    // 'mochaTest',
     'clean',
     'browserify',
     'uglify',
-    /*'start-test-server',
+    'start-test-server',
     'mocha_phantomjs',
-    'stop-test-server'*/
+    'stop-test-server'
   ]);
 };
 /* jshint +W106 */
