@@ -151,6 +151,8 @@ The following methods return promises:
 Release Notes
 -------------
 
+* 0.13.0 2014-12-01
+   * Reduce size of browser build by 33%. The minified version now has 37k instead of 55k (still too much, but also much better than before)
 * 0.12.0 2014-11-29:
     * Initial release
 

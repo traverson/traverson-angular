@@ -3,7 +3,9 @@
 To release version x.y.z:
 
 - Update release notes
-- bump version in package.json to x.y.z
+- bump version of traverson in package.json
+- npm i
+- bump version in package.json to x.y.z (should match the used traverson version, at least the major and minor number)
 - bump version in bower.json to x.y.z
 - `grunt` (to create a fresh browser build, also make sure all tests pass etc.)
 - `git commit -am"release x.y.z" && git push`
