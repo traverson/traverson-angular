@@ -11,11 +11,15 @@ AngularJS integration for Traverson, the JS Hypermedia Client
 
 [![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/)
 
+| File Size (browser build) | KB |
+|---------------------------|---:|
+| minified & gzipped        | 12 |
+| minified                  | 37 |
 
 Introduction
 ------------
 
-traverson-angular offers seamless integration of <a href="https://github.com/basti1302/traverson">Traverson</a> with AngularJS. Traverson comes in handy when consuming REST APIs that follow the HATEOAS principle, that is, REST APIs that have links between their resources. If you don't know Traverson, you should probably have a look at its <a href="https://github.com/basti1302/traverson">GitHub page</a> or at this <a href="https://blog.codecentric.de/en/2013/11/traverson/">introductory blog post</a> first.
+traverson-angular offers seamless integration of [Traverson](https://github.com/basti1302/traverson) with AngularJS. Traverson comes in handy when consuming REST APIs that follow the HATEOAS principle, that is, REST APIs that have links between their resources. If you don't know Traverson, you should probably have a look at its [GitHub page](https://github.com/basti1302/traverson) or at this [introductory blog post](https://blog.codecentric.de/en/2013/11/traverson/) first.
 
 traverson-angular wraps Traverson in an AngularJS module and converts the original callback based API into an API based on promises.
 
@@ -54,13 +58,13 @@ angular.module('my-app').service('apiService', function(traverson) {
 
 Have a look at the examples in the repository:
 
-* <a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/index.html">Example 1</a> (<a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/traverson-angular-example.js">JavaScript here</a>)
-* <a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/github.html">GitHub API example</a> (<a href="https://github.com/basti1302/traverson-angular/blob/master/browser/example/github-example.js">JavaScript here</a>)
+* [Example 1](https://github.com/basti1302/traverson-angular/blob/master/browser/example/index.html) ([JavaScript here](https://github.com/basti1302/traverson-angular/blob/master/browser/example/traverson-angular-example.js))
+* [GitHub API example](https://github.com/basti1302/traverson-angular/blob/master/browser/example/github.html) ([JavaScript here](https://github.com/basti1302/traverson-angular/blob/master/browser/example/github-example.js))
 
 Using npm and Browserify
 ------------------------
 
-If you are using npm and [Browserify](http://browserify.org/) and writing your <a href="https://blog.codecentric.de/en/2014/08/angularjs-browserify/">AngularJS app as CommonJS modules</a>, instead of downloading a release, you can install it with `npm install traverson-angular -S`.
+If you are using npm and [Browserify](http://browserify.org/) and writing your [AngularJS app as CommonJS modules](https://blog.codecentric.de/en/2014/08/angularjs-browserify/), instead of downloading a release, you can install it with `npm install traverson-angular -S`.
 
 This is how your code using traverson-angular would look like:
 ```
@@ -76,7 +80,7 @@ app.service('apiService', function(traverson) {
 
 ```
 
-See <a href="https://github.com/basti1302/traverson-angular/tree/master/browser/example/browserify">here</a> for a complete, working example of a CommonJS based AngularJS app using traverson-angular, build with Browserify.
+See [here](https://github.com/basti1302/traverson-angular/tree/master/browser/example/browserify) for a complete, working example of a CommonJS based AngularJS app using traverson-angular, build with Browserify.
 
 To `require` angular-core like this, you need a shim in your package.json, like this:
 
@@ -105,7 +109,7 @@ Browserify your app as usual - Browserify will include traverson-angular, Traver
 API
 ---
 
-You should refer to <a href="https://github.com/basti1302/traverson/blob/master/readme.markdown">Traverson's docs</a> for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
+You should refer to [Traverson's docs](https://github.com/basti1302/traverson/blob/master/readme.markdown) for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
 
 So this code, which uses Traverson directly:
 ```
@@ -151,6 +155,9 @@ The following methods return promises:
 Release Notes
 -------------
 
+A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
+
+* 0.14.0 2014-12-05: See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
 * 0.13.0 2014-12-01
    * Reduce size of browser build by 33%. The minified version now has 37k instead of 55k (still too much, but also much better than before)
 * 0.12.0 2014-11-29:
@@ -160,4 +167,3 @@ License
 -------
 
 MIT
-
