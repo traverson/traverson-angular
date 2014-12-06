@@ -1,6 +1,6 @@
 {
   "name": "traverson-angular",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "AngularJS adapter for Traverson",
   "repository": "https://github.com/basti1302/traverson-angular.git",
   "main": "traverson-angular.js",
@@ -10,7 +10,7 @@
     "test": "grunt"
   },
   "dependencies": {
-    "traverson": "^0.14.0"
+    "traverson": "^0.15.0"
   },
   "devDependencies": {
     "angular": "^1.3.4",

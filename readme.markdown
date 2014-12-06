@@ -7,14 +7,12 @@ AngularJS integration for Traverson, the JS Hypermedia Client
 [![Build Status](https://travis-ci.org/basti1302/traverson-angular.png?branch=master)](https://travis-ci.org/basti1302/traverson-angular)
 [![Dependency Status](https://david-dm.org/basti1302/traverson-angular.png)](https://david-dm.org/basti1302/traverson-angular)
 
-[![browser support](http://ci.testling.com/basti1302/traverson-angular.png)](http://ci.testling.com/basti1302/traverson-angular)
-
 [![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/)
 
 | File Size (browser build) | KB |
 |---------------------------|---:|
 | minified & gzipped        | 12 |
-| minified                  | 37 |
+| minified                  | 38 |
 
 Introduction
 ------------
@@ -157,6 +155,7 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 0.15.0 2014-12-06: See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
 * 0.14.0 2014-12-05: See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
 * 0.13.0 2014-12-01
    * Reduce size of browser build by 33%. The minified version now has 37k instead of 55k (still too much, but also much better than before)
