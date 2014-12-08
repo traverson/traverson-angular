@@ -9,8 +9,8 @@ var testModule = angular.module('testModule', ['traverson'])
 var chai = require('chai')
   , sinon = require('sinon')
   , sinonChai = require('sinon-chai')
-  , mockResponse = require('./util/mock_response')
-  , waitFor = require('./util/wait_for')
+  , mockResponse = require('traverson-mock-response')()
+  , waitFor = require('poll-forever')
   , assert = chai.assert
   , expect = chai.expect
   ;

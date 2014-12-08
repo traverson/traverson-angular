@@ -26,9 +26,11 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-mocha-phantomjs": "^0.4.3",
     "mocha": "^1.18.2",
+    "poll-forever": "^1.0.0",
     "request": "^2.49.0",
     "sinon": "^1.9.1",
-    "sinon-chai": "^2.5.0"
+    "sinon-chai": "^2.5.0",
+    "traverson-mock-response": "^1.0.0"
   },
   "browser": {
     "angular": false
