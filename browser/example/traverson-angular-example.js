@@ -12,14 +12,12 @@
   app.controller('generalSetup', function($scope) {
     $scope.code =
       'var rootUri = \'' + rootUri + '\';<br>' +
-      'var jsonApi = traverson.<i>json</i>.from(rootUri);<br>' +
-      'var jsonHalApi = traverson.<i>jsonHal</i>.from(rootUri);<br>';
+      'var jsonApi = traverson.<i>json</i>.from(rootUri);<br>';
   });
 
   app.service('apiService', function(traverson) {
 
     var jsonApi = traverson.json.from(rootUri);
-    var jsonHalApi = traverson.jsonHal.from(rootUri);
 
     this.plainVanilla = function() {
       return jsonApi.newRequest()
@@ -42,14 +40,6 @@
       .withRequestOptions({ headers: { 'accept': 'application/json' } })
       .follow('uri_template')
       .withTemplateParameters({ param: 'foobar', id: 13 })
-      .getResource();
-    };
-
-    this.jsonHal = function() {
-      return jsonHalApi
-      .newRequest()
-      .withRequestOptions({ headers: { 'accept': 'application/hal+json' } })
-      .follow('first', 'second', 'inside_second')
       .getResource();
     };
   });
@@ -122,25 +112,4 @@
       '});';
   });
 
-  app.controller('jsonHalController', function($scope, apiService) {
-    $scope.start = function() {
-      $scope.response = '... talking to server, please stand by ...';
-      apiService.jsonHal().then(function(resource) {
-         $scope.response = JSON.stringify(resource, null, 2);
-      }, function(err) {
-         $scope.response = err.message || JSON.stringify(err);
-      });
-    };
-
-    $scope.code =
-      'jsonHalApi.newRequest()<br>' +
-      '.withRequestOptions({<br>' +
-      '  headers: { \'accept\': \'application/hal+json\' }<br>' +
-      '})<br>' +
-      '.follow(\'first\', \'second\', \'inside_second\')<br>' +
-      '.getResource()<br>' +
-      '.then(function(resource) {<br>' +
-      '  // do something with the resource...<br>' +
-      '});<br>';
-  });
 })();
