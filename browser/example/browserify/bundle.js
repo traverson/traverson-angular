@@ -25944,6 +25944,11 @@ app.controller('generalSetup', function($scope) {
 app.service('apiService', function(traverson) {
 
   var jsonApi = traverson.json.from(rootUri);
+
+  // Requiring and registering the traverson-hal plug-in is fully optional,
+  // you only need that when you want HAL support.
+  var JsonHalAdapter = require('traverson-hal');
+  traverson.registerMediaType(JsonHalAdapter.mediaType, JsonHalAdapter);
   var jsonHalApi = traverson.jsonHal.from(rootUri);
 
   this.plainVanilla = function() {
@@ -26069,7 +26074,7 @@ app.controller('jsonHalController', function($scope, apiService) {
     '});<br>';
 });
 
-},{"angular":1,"angular-sanitize":4,"traverson-angular":35}],4:[function(require,module,exports){
+},{"angular":1,"angular-sanitize":4,"traverson-angular":25,"traverson-hal":26}],4:[function(require,module,exports){
 /**
  * @license AngularJS v1.3.4
  * (c) 2010-2014 Google, Inc. http://angularjs.org
@@ -26752,1405 +26757,6 @@ angular.module('ngSanitize').filter('linky', ['$sanitize', function($sanitize) {
 },{}],5:[function(require,module,exports){
 
 },{}],6:[function(require,module,exports){
-(function (global){
-/*! http://mths.be/punycode v1.2.4 by @mathias */
-;(function(root) {
-
-	/** Detect free variables */
-	var freeExports = typeof exports == 'object' && exports;
-	var freeModule = typeof module == 'object' && module &&
-		module.exports == freeExports && module;
-	var freeGlobal = typeof global == 'object' && global;
-	if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal) {
-		root = freeGlobal;
-	}
-
-	/**
-	 * The `punycode` object.
-	 * @name punycode
-	 * @type Object
-	 */
-	var punycode,
-
-	/** Highest positive signed 32-bit float value */
-	maxInt = 2147483647, // aka. 0x7FFFFFFF or 2^31-1
-
-	/** Bootstring parameters */
-	base = 36,
-	tMin = 1,
-	tMax = 26,
-	skew = 38,
-	damp = 700,
-	initialBias = 72,
-	initialN = 128, // 0x80
-	delimiter = '-', // '\x2D'
-
-	/** Regular expressions */
-	regexPunycode = /^xn--/,
-	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
-	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
-
-	/** Error messages */
-	errors = {
-		'overflow': 'Overflow: input needs wider integers to process',
-		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
-		'invalid-input': 'Invalid input'
-	},
-
-	/** Convenience shortcuts */
-	baseMinusTMin = base - tMin,
-	floor = Math.floor,
-	stringFromCharCode = String.fromCharCode,
-
-	/** Temporary variable */
-	key;
-
-	/*--------------------------------------------------------------------------*/
-
-	/**
-	 * A generic error utility function.
-	 * @private
-	 * @param {String} type The error type.
-	 * @returns {Error} Throws a `RangeError` with the applicable error message.
-	 */
-	function error(type) {
-		throw RangeError(errors[type]);
-	}
-
-	/**
-	 * A generic `Array#map` utility function.
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} callback The function that gets called for every array
-	 * item.
-	 * @returns {Array} A new array of values returned by the callback function.
-	 */
-	function map(array, fn) {
-		var length = array.length;
-		while (length--) {
-			array[length] = fn(array[length]);
-		}
-		return array;
-	}
-
-	/**
-	 * A simple `Array#map`-like wrapper to work with domain name strings.
-	 * @private
-	 * @param {String} domain The domain name.
-	 * @param {Function} callback The function that gets called for every
-	 * character.
-	 * @returns {Array} A new string of characters returned by the callback
-	 * function.
-	 */
-	function mapDomain(string, fn) {
-		return map(string.split(regexSeparators), fn).join('.');
-	}
-
-	/**
-	 * Creates an array containing the numeric code points of each Unicode
-	 * character in the string. While JavaScript uses UCS-2 internally,
-	 * this function will convert a pair of surrogate halves (each of which
-	 * UCS-2 exposes as separate characters) into a single code point,
-	 * matching UTF-16.
-	 * @see `punycode.ucs2.encode`
-	 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-	 * @memberOf punycode.ucs2
-	 * @name decode
-	 * @param {String} string The Unicode input string (UCS-2).
-	 * @returns {Array} The new array of code points.
-	 */
-	function ucs2decode(string) {
-		var output = [],
-		    counter = 0,
-		    length = string.length,
-		    value,
-		    extra;
-		while (counter < length) {
-			value = string.charCodeAt(counter++);
-			if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-				// high surrogate, and there is a next character
-				extra = string.charCodeAt(counter++);
-				if ((extra & 0xFC00) == 0xDC00) { // low surrogate
-					output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-				} else {
-					// unmatched surrogate; only append this code unit, in case the next
-					// code unit is the high surrogate of a surrogate pair
-					output.push(value);
-					counter--;
-				}
-			} else {
-				output.push(value);
-			}
-		}
-		return output;
-	}
-
-	/**
-	 * Creates a string based on an array of numeric code points.
-	 * @see `punycode.ucs2.decode`
-	 * @memberOf punycode.ucs2
-	 * @name encode
-	 * @param {Array} codePoints The array of numeric code points.
-	 * @returns {String} The new Unicode string (UCS-2).
-	 */
-	function ucs2encode(array) {
-		return map(array, function(value) {
-			var output = '';
-			if (value > 0xFFFF) {
-				value -= 0x10000;
-				output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-				value = 0xDC00 | value & 0x3FF;
-			}
-			output += stringFromCharCode(value);
-			return output;
-		}).join('');
-	}
-
-	/**
-	 * Converts a basic code point into a digit/integer.
-	 * @see `digitToBasic()`
-	 * @private
-	 * @param {Number} codePoint The basic numeric code point value.
-	 * @returns {Number} The numeric value of a basic code point (for use in
-	 * representing integers) in the range `0` to `base - 1`, or `base` if
-	 * the code point does not represent a value.
-	 */
-	function basicToDigit(codePoint) {
-		if (codePoint - 48 < 10) {
-			return codePoint - 22;
-		}
-		if (codePoint - 65 < 26) {
-			return codePoint - 65;
-		}
-		if (codePoint - 97 < 26) {
-			return codePoint - 97;
-		}
-		return base;
-	}
-
-	/**
-	 * Converts a digit/integer into a basic code point.
-	 * @see `basicToDigit()`
-	 * @private
-	 * @param {Number} digit The numeric value of a basic code point.
-	 * @returns {Number} The basic code point whose value (when used for
-	 * representing integers) is `digit`, which needs to be in the range
-	 * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
-	 * used; else, the lowercase form is used. The behavior is undefined
-	 * if `flag` is non-zero and `digit` has no uppercase form.
-	 */
-	function digitToBasic(digit, flag) {
-		//  0..25 map to ASCII a..z or A..Z
-		// 26..35 map to ASCII 0..9
-		return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-	}
-
-	/**
-	 * Bias adaptation function as per section 3.4 of RFC 3492.
-	 * http://tools.ietf.org/html/rfc3492#section-3.4
-	 * @private
-	 */
-	function adapt(delta, numPoints, firstTime) {
-		var k = 0;
-		delta = firstTime ? floor(delta / damp) : delta >> 1;
-		delta += floor(delta / numPoints);
-		for (/* no initialization */; delta > baseMinusTMin * tMax >> 1; k += base) {
-			delta = floor(delta / baseMinusTMin);
-		}
-		return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-	}
-
-	/**
-	 * Converts a Punycode string of ASCII-only symbols to a string of Unicode
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The Punycode string of ASCII-only symbols.
-	 * @returns {String} The resulting string of Unicode symbols.
-	 */
-	function decode(input) {
-		// Don't use UCS-2
-		var output = [],
-		    inputLength = input.length,
-		    out,
-		    i = 0,
-		    n = initialN,
-		    bias = initialBias,
-		    basic,
-		    j,
-		    index,
-		    oldi,
-		    w,
-		    k,
-		    digit,
-		    t,
-		    /** Cached calculation results */
-		    baseMinusT;
-
-		// Handle the basic code points: let `basic` be the number of input code
-		// points before the last delimiter, or `0` if there is none, then copy
-		// the first basic code points to the output.
-
-		basic = input.lastIndexOf(delimiter);
-		if (basic < 0) {
-			basic = 0;
-		}
-
-		for (j = 0; j < basic; ++j) {
-			// if it's not a basic code point
-			if (input.charCodeAt(j) >= 0x80) {
-				error('not-basic');
-			}
-			output.push(input.charCodeAt(j));
-		}
-
-		// Main decoding loop: start just after the last delimiter if any basic code
-		// points were copied; start at the beginning otherwise.
-
-		for (index = basic > 0 ? basic + 1 : 0; index < inputLength; /* no final expression */) {
-
-			// `index` is the index of the next character to be consumed.
-			// Decode a generalized variable-length integer into `delta`,
-			// which gets added to `i`. The overflow checking is easier
-			// if we increase `i` as we go, then subtract off its starting
-			// value at the end to obtain `delta`.
-			for (oldi = i, w = 1, k = base; /* no condition */; k += base) {
-
-				if (index >= inputLength) {
-					error('invalid-input');
-				}
-
-				digit = basicToDigit(input.charCodeAt(index++));
-
-				if (digit >= base || digit > floor((maxInt - i) / w)) {
-					error('overflow');
-				}
-
-				i += digit * w;
-				t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-
-				if (digit < t) {
-					break;
-				}
-
-				baseMinusT = base - t;
-				if (w > floor(maxInt / baseMinusT)) {
-					error('overflow');
-				}
-
-				w *= baseMinusT;
-
-			}
-
-			out = output.length + 1;
-			bias = adapt(i - oldi, out, oldi == 0);
-
-			// `i` was supposed to wrap around from `out` to `0`,
-			// incrementing `n` each time, so we'll fix that now:
-			if (floor(i / out) > maxInt - n) {
-				error('overflow');
-			}
-
-			n += floor(i / out);
-			i %= out;
-
-			// Insert `n` at position `i` of the output
-			output.splice(i++, 0, n);
-
-		}
-
-		return ucs2encode(output);
-	}
-
-	/**
-	 * Converts a string of Unicode symbols to a Punycode string of ASCII-only
-	 * symbols.
-	 * @memberOf punycode
-	 * @param {String} input The string of Unicode symbols.
-	 * @returns {String} The resulting Punycode string of ASCII-only symbols.
-	 */
-	function encode(input) {
-		var n,
-		    delta,
-		    handledCPCount,
-		    basicLength,
-		    bias,
-		    j,
-		    m,
-		    q,
-		    k,
-		    t,
-		    currentValue,
-		    output = [],
-		    /** `inputLength` will hold the number of code points in `input`. */
-		    inputLength,
-		    /** Cached calculation results */
-		    handledCPCountPlusOne,
-		    baseMinusT,
-		    qMinusT;
-
-		// Convert the input in UCS-2 to Unicode
-		input = ucs2decode(input);
-
-		// Cache the length
-		inputLength = input.length;
-
-		// Initialize the state
-		n = initialN;
-		delta = 0;
-		bias = initialBias;
-
-		// Handle the basic code points
-		for (j = 0; j < inputLength; ++j) {
-			currentValue = input[j];
-			if (currentValue < 0x80) {
-				output.push(stringFromCharCode(currentValue));
-			}
-		}
-
-		handledCPCount = basicLength = output.length;
-
-		// `handledCPCount` is the number of code points that have been handled;
-		// `basicLength` is the number of basic code points.
-
-		// Finish the basic string - if it is not empty - with a delimiter
-		if (basicLength) {
-			output.push(delimiter);
-		}
-
-		// Main encoding loop:
-		while (handledCPCount < inputLength) {
-
-			// All non-basic code points < n have been handled already. Find the next
-			// larger one:
-			for (m = maxInt, j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-				if (currentValue >= n && currentValue < m) {
-					m = currentValue;
-				}
-			}
-
-			// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
-			// but guard against overflow
-			handledCPCountPlusOne = handledCPCount + 1;
-			if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-				error('overflow');
-			}
-
-			delta += (m - n) * handledCPCountPlusOne;
-			n = m;
-
-			for (j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-
-				if (currentValue < n && ++delta > maxInt) {
-					error('overflow');
-				}
-
-				if (currentValue == n) {
-					// Represent delta as a generalized variable-length integer
-					for (q = delta, k = base; /* no condition */; k += base) {
-						t = k <= bias ? tMin : (k >= bias + tMax ? tMax : k - bias);
-						if (q < t) {
-							break;
-						}
-						qMinusT = q - t;
-						baseMinusT = base - t;
-						output.push(
-							stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0))
-						);
-						q = floor(qMinusT / baseMinusT);
-					}
-
-					output.push(stringFromCharCode(digitToBasic(q, 0)));
-					bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-					delta = 0;
-					++handledCPCount;
-				}
-			}
-
-			++delta;
-			++n;
-
-		}
-		return output.join('');
-	}
-
-	/**
-	 * Converts a Punycode string representing a domain name to Unicode. Only the
-	 * Punycoded parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it on a string that has already been converted to
-	 * Unicode.
-	 * @memberOf punycode
-	 * @param {String} domain The Punycode domain name to convert to Unicode.
-	 * @returns {String} The Unicode representation of the given Punycode
-	 * string.
-	 */
-	function toUnicode(domain) {
-		return mapDomain(domain, function(string) {
-			return regexPunycode.test(string)
-				? decode(string.slice(4).toLowerCase())
-				: string;
-		});
-	}
-
-	/**
-	 * Converts a Unicode string representing a domain name to Punycode. Only the
-	 * non-ASCII parts of the domain name will be converted, i.e. it doesn't
-	 * matter if you call it with a domain that's already in ASCII.
-	 * @memberOf punycode
-	 * @param {String} domain The domain name to convert, as a Unicode string.
-	 * @returns {String} The Punycode representation of the given domain name.
-	 */
-	function toASCII(domain) {
-		return mapDomain(domain, function(string) {
-			return regexNonASCII.test(string)
-				? 'xn--' + encode(string)
-				: string;
-		});
-	}
-
-	/*--------------------------------------------------------------------------*/
-
-	/** Define the public API */
-	punycode = {
-		/**
-		 * A string representing the current Punycode.js version number.
-		 * @memberOf punycode
-		 * @type String
-		 */
-		'version': '1.2.4',
-		/**
-		 * An object of methods to convert from JavaScript's internal character
-		 * representation (UCS-2) to Unicode code points, and back.
-		 * @see <http://mathiasbynens.be/notes/javascript-encoding>
-		 * @memberOf punycode
-		 * @type Object
-		 */
-		'ucs2': {
-			'decode': ucs2decode,
-			'encode': ucs2encode
-		},
-		'decode': decode,
-		'encode': encode,
-		'toASCII': toASCII,
-		'toUnicode': toUnicode
-	};
-
-	/** Expose `punycode` */
-	// Some AMD build optimizers, like r.js, check for specific condition patterns
-	// like the following:
-	if (
-		typeof define == 'function' &&
-		typeof define.amd == 'object' &&
-		define.amd
-	) {
-		define('punycode', function() {
-			return punycode;
-		});
-	} else if (freeExports && !freeExports.nodeType) {
-		if (freeModule) { // in Node.js or RingoJS v0.8.0+
-			freeModule.exports = punycode;
-		} else { // in Narwhal or RingoJS v0.7.0-
-			for (key in punycode) {
-				punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
-			}
-		}
-	} else { // in Rhino or a web browser
-		root.punycode = punycode;
-	}
-
-}(this));
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],7:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-// If obj.hasOwnProperty has been overridden, then calling
-// obj.hasOwnProperty(prop) will break.
-// See: https://github.com/joyent/node/issues/1707
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-module.exports = function(qs, sep, eq, options) {
-  sep = sep || '&';
-  eq = eq || '=';
-  var obj = {};
-
-  if (typeof qs !== 'string' || qs.length === 0) {
-    return obj;
-  }
-
-  var regexp = /\+/g;
-  qs = qs.split(sep);
-
-  var maxKeys = 1000;
-  if (options && typeof options.maxKeys === 'number') {
-    maxKeys = options.maxKeys;
-  }
-
-  var len = qs.length;
-  // maxKeys <= 0 means that we should not limit keys count
-  if (maxKeys > 0 && len > maxKeys) {
-    len = maxKeys;
-  }
-
-  for (var i = 0; i < len; ++i) {
-    var x = qs[i].replace(regexp, '%20'),
-        idx = x.indexOf(eq),
-        kstr, vstr, k, v;
-
-    if (idx >= 0) {
-      kstr = x.substr(0, idx);
-      vstr = x.substr(idx + 1);
-    } else {
-      kstr = x;
-      vstr = '';
-    }
-
-    k = decodeURIComponent(kstr);
-    v = decodeURIComponent(vstr);
-
-    if (!hasOwnProperty(obj, k)) {
-      obj[k] = v;
-    } else if (isArray(obj[k])) {
-      obj[k].push(v);
-    } else {
-      obj[k] = [obj[k], v];
-    }
-  }
-
-  return obj;
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-},{}],8:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-'use strict';
-
-var stringifyPrimitive = function(v) {
-  switch (typeof v) {
-    case 'string':
-      return v;
-
-    case 'boolean':
-      return v ? 'true' : 'false';
-
-    case 'number':
-      return isFinite(v) ? v : '';
-
-    default:
-      return '';
-  }
-};
-
-module.exports = function(obj, sep, eq, name) {
-  sep = sep || '&';
-  eq = eq || '=';
-  if (obj === null) {
-    obj = undefined;
-  }
-
-  if (typeof obj === 'object') {
-    return map(objectKeys(obj), function(k) {
-      var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-      if (isArray(obj[k])) {
-        return map(obj[k], function(v) {
-          return ks + encodeURIComponent(stringifyPrimitive(v));
-        }).join(sep);
-      } else {
-        return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-      }
-    }).join(sep);
-
-  }
-
-  if (!name) return '';
-  return encodeURIComponent(stringifyPrimitive(name)) + eq +
-         encodeURIComponent(stringifyPrimitive(obj));
-};
-
-var isArray = Array.isArray || function (xs) {
-  return Object.prototype.toString.call(xs) === '[object Array]';
-};
-
-function map (xs, f) {
-  if (xs.map) return xs.map(f);
-  var res = [];
-  for (var i = 0; i < xs.length; i++) {
-    res.push(f(xs[i], i));
-  }
-  return res;
-}
-
-var objectKeys = Object.keys || function (obj) {
-  var res = [];
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) res.push(key);
-  }
-  return res;
-};
-
-},{}],9:[function(require,module,exports){
-'use strict';
-
-exports.decode = exports.parse = require('./decode');
-exports.encode = exports.stringify = require('./encode');
-
-},{"./decode":7,"./encode":8}],10:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var punycode = require('punycode');
-
-exports.parse = urlParse;
-exports.resolve = urlResolve;
-exports.resolveObject = urlResolveObject;
-exports.format = urlFormat;
-
-exports.Url = Url;
-
-function Url() {
-  this.protocol = null;
-  this.slashes = null;
-  this.auth = null;
-  this.host = null;
-  this.port = null;
-  this.hostname = null;
-  this.hash = null;
-  this.search = null;
-  this.query = null;
-  this.pathname = null;
-  this.path = null;
-  this.href = null;
-}
-
-// Reference: RFC 3986, RFC 1808, RFC 2396
-
-// define these here so at least they only have to be
-// compiled once on the first module load.
-var protocolPattern = /^([a-z0-9.+-]+:)/i,
-    portPattern = /:[0-9]*$/,
-
-    // RFC 2396: characters reserved for delimiting URLs.
-    // We actually just auto-escape these.
-    delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
-
-    // RFC 2396: characters not allowed for various reasons.
-    unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
-
-    // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
-    autoEscape = ['\''].concat(unwise),
-    // Characters that are never ever allowed in a hostname.
-    // Note that any invalid chars are also handled, but these
-    // are the ones that are *expected* to be seen, so we fast-path
-    // them.
-    nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
-    hostEndingChars = ['/', '?', '#'],
-    hostnameMaxLen = 255,
-    hostnamePartPattern = /^[a-z0-9A-Z_-]{0,63}$/,
-    hostnamePartStart = /^([a-z0-9A-Z_-]{0,63})(.*)$/,
-    // protocols that can allow "unsafe" and "unwise" chars.
-    unsafeProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that never have a hostname.
-    hostlessProtocol = {
-      'javascript': true,
-      'javascript:': true
-    },
-    // protocols that always contain a // bit.
-    slashedProtocol = {
-      'http': true,
-      'https': true,
-      'ftp': true,
-      'gopher': true,
-      'file': true,
-      'http:': true,
-      'https:': true,
-      'ftp:': true,
-      'gopher:': true,
-      'file:': true
-    },
-    querystring = require('querystring');
-
-function urlParse(url, parseQueryString, slashesDenoteHost) {
-  if (url && isObject(url) && url instanceof Url) return url;
-
-  var u = new Url;
-  u.parse(url, parseQueryString, slashesDenoteHost);
-  return u;
-}
-
-Url.prototype.parse = function(url, parseQueryString, slashesDenoteHost) {
-  if (!isString(url)) {
-    throw new TypeError("Parameter 'url' must be a string, not " + typeof url);
-  }
-
-  var rest = url;
-
-  // trim before proceeding.
-  // This is to support parse stuff like "  http://foo.com  \n"
-  rest = rest.trim();
-
-  var proto = protocolPattern.exec(rest);
-  if (proto) {
-    proto = proto[0];
-    var lowerProto = proto.toLowerCase();
-    this.protocol = lowerProto;
-    rest = rest.substr(proto.length);
-  }
-
-  // figure out if it's got a host
-  // user@server is *always* interpreted as a hostname, and url
-  // resolution will treat //foo/bar as host=foo,path=bar because that's
-  // how the browser resolves relative URLs.
-  if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
-    var slashes = rest.substr(0, 2) === '//';
-    if (slashes && !(proto && hostlessProtocol[proto])) {
-      rest = rest.substr(2);
-      this.slashes = true;
-    }
-  }
-
-  if (!hostlessProtocol[proto] &&
-      (slashes || (proto && !slashedProtocol[proto]))) {
-
-    // there's a hostname.
-    // the first instance of /, ?, ;, or # ends the host.
-    //
-    // If there is an @ in the hostname, then non-host chars *are* allowed
-    // to the left of the last @ sign, unless some host-ending character
-    // comes *before* the @-sign.
-    // URLs are obnoxious.
-    //
-    // ex:
-    // http://a@b@c/ => user:a@b host:c
-    // http://a@b?@c => user:a host:c path:/?@c
-
-    // v0.12 TODO(isaacs): This is not quite how Chrome does things.
-    // Review our test case against browsers more comprehensively.
-
-    // find the first instance of any hostEndingChars
-    var hostEnd = -1;
-    for (var i = 0; i < hostEndingChars.length; i++) {
-      var hec = rest.indexOf(hostEndingChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-
-    // at this point, either we have an explicit point where the
-    // auth portion cannot go past, or the last @ char is the decider.
-    var auth, atSign;
-    if (hostEnd === -1) {
-      // atSign can be anywhere.
-      atSign = rest.lastIndexOf('@');
-    } else {
-      // atSign must be in auth portion.
-      // http://a@b/c@d => host:b auth:a path:/c@d
-      atSign = rest.lastIndexOf('@', hostEnd);
-    }
-
-    // Now we have a portion which is definitely the auth.
-    // Pull that off.
-    if (atSign !== -1) {
-      auth = rest.slice(0, atSign);
-      rest = rest.slice(atSign + 1);
-      this.auth = decodeURIComponent(auth);
-    }
-
-    // the host is the remaining to the left of the first non-host char
-    hostEnd = -1;
-    for (var i = 0; i < nonHostChars.length; i++) {
-      var hec = rest.indexOf(nonHostChars[i]);
-      if (hec !== -1 && (hostEnd === -1 || hec < hostEnd))
-        hostEnd = hec;
-    }
-    // if we still have not hit it, then the entire thing is a host.
-    if (hostEnd === -1)
-      hostEnd = rest.length;
-
-    this.host = rest.slice(0, hostEnd);
-    rest = rest.slice(hostEnd);
-
-    // pull out port.
-    this.parseHost();
-
-    // we've indicated that there is a hostname,
-    // so even if it's empty, it has to be present.
-    this.hostname = this.hostname || '';
-
-    // if hostname begins with [ and ends with ]
-    // assume that it's an IPv6 address.
-    var ipv6Hostname = this.hostname[0] === '[' &&
-        this.hostname[this.hostname.length - 1] === ']';
-
-    // validate a little.
-    if (!ipv6Hostname) {
-      var hostparts = this.hostname.split(/\./);
-      for (var i = 0, l = hostparts.length; i < l; i++) {
-        var part = hostparts[i];
-        if (!part) continue;
-        if (!part.match(hostnamePartPattern)) {
-          var newpart = '';
-          for (var j = 0, k = part.length; j < k; j++) {
-            if (part.charCodeAt(j) > 127) {
-              // we replace non-ASCII char with a temporary placeholder
-              // we need this to make sure size of hostname is not
-              // broken by replacing non-ASCII by nothing
-              newpart += 'x';
-            } else {
-              newpart += part[j];
-            }
-          }
-          // we test again with ASCII char only
-          if (!newpart.match(hostnamePartPattern)) {
-            var validParts = hostparts.slice(0, i);
-            var notHost = hostparts.slice(i + 1);
-            var bit = part.match(hostnamePartStart);
-            if (bit) {
-              validParts.push(bit[1]);
-              notHost.unshift(bit[2]);
-            }
-            if (notHost.length) {
-              rest = '/' + notHost.join('.') + rest;
-            }
-            this.hostname = validParts.join('.');
-            break;
-          }
-        }
-      }
-    }
-
-    if (this.hostname.length > hostnameMaxLen) {
-      this.hostname = '';
-    } else {
-      // hostnames are always lower case.
-      this.hostname = this.hostname.toLowerCase();
-    }
-
-    if (!ipv6Hostname) {
-      // IDNA Support: Returns a puny coded representation of "domain".
-      // It only converts the part of the domain name that
-      // has non ASCII characters. I.e. it dosent matter if
-      // you call it with a domain that already is in ASCII.
-      var domainArray = this.hostname.split('.');
-      var newOut = [];
-      for (var i = 0; i < domainArray.length; ++i) {
-        var s = domainArray[i];
-        newOut.push(s.match(/[^A-Za-z0-9_-]/) ?
-            'xn--' + punycode.encode(s) : s);
-      }
-      this.hostname = newOut.join('.');
-    }
-
-    var p = this.port ? ':' + this.port : '';
-    var h = this.hostname || '';
-    this.host = h + p;
-    this.href += this.host;
-
-    // strip [ and ] from the hostname
-    // the host field still retains them, though
-    if (ipv6Hostname) {
-      this.hostname = this.hostname.substr(1, this.hostname.length - 2);
-      if (rest[0] !== '/') {
-        rest = '/' + rest;
-      }
-    }
-  }
-
-  // now rest is set to the post-host stuff.
-  // chop off any delim chars.
-  if (!unsafeProtocol[lowerProto]) {
-
-    // First, make 100% sure that any "autoEscape" chars get
-    // escaped, even if encodeURIComponent doesn't think they
-    // need to be.
-    for (var i = 0, l = autoEscape.length; i < l; i++) {
-      var ae = autoEscape[i];
-      var esc = encodeURIComponent(ae);
-      if (esc === ae) {
-        esc = escape(ae);
-      }
-      rest = rest.split(ae).join(esc);
-    }
-  }
-
-
-  // chop off from the tail first.
-  var hash = rest.indexOf('#');
-  if (hash !== -1) {
-    // got a fragment string.
-    this.hash = rest.substr(hash);
-    rest = rest.slice(0, hash);
-  }
-  var qm = rest.indexOf('?');
-  if (qm !== -1) {
-    this.search = rest.substr(qm);
-    this.query = rest.substr(qm + 1);
-    if (parseQueryString) {
-      this.query = querystring.parse(this.query);
-    }
-    rest = rest.slice(0, qm);
-  } else if (parseQueryString) {
-    // no query string, but parseQueryString still requested
-    this.search = '';
-    this.query = {};
-  }
-  if (rest) this.pathname = rest;
-  if (slashedProtocol[lowerProto] &&
-      this.hostname && !this.pathname) {
-    this.pathname = '/';
-  }
-
-  //to support http.request
-  if (this.pathname || this.search) {
-    var p = this.pathname || '';
-    var s = this.search || '';
-    this.path = p + s;
-  }
-
-  // finally, reconstruct the href based on what has been validated.
-  this.href = this.format();
-  return this;
-};
-
-// format a parsed object into a url string
-function urlFormat(obj) {
-  // ensure it's an object, and not a string url.
-  // If it's an obj, this is a no-op.
-  // this way, you can call url_format() on strings
-  // to clean up potentially wonky urls.
-  if (isString(obj)) obj = urlParse(obj);
-  if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
-  return obj.format();
-}
-
-Url.prototype.format = function() {
-  var auth = this.auth || '';
-  if (auth) {
-    auth = encodeURIComponent(auth);
-    auth = auth.replace(/%3A/i, ':');
-    auth += '@';
-  }
-
-  var protocol = this.protocol || '',
-      pathname = this.pathname || '',
-      hash = this.hash || '',
-      host = false,
-      query = '';
-
-  if (this.host) {
-    host = auth + this.host;
-  } else if (this.hostname) {
-    host = auth + (this.hostname.indexOf(':') === -1 ?
-        this.hostname :
-        '[' + this.hostname + ']');
-    if (this.port) {
-      host += ':' + this.port;
-    }
-  }
-
-  if (this.query &&
-      isObject(this.query) &&
-      Object.keys(this.query).length) {
-    query = querystring.stringify(this.query);
-  }
-
-  var search = this.search || (query && ('?' + query)) || '';
-
-  if (protocol && protocol.substr(-1) !== ':') protocol += ':';
-
-  // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
-  // unless they had them to begin with.
-  if (this.slashes ||
-      (!protocol || slashedProtocol[protocol]) && host !== false) {
-    host = '//' + (host || '');
-    if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
-  } else if (!host) {
-    host = '';
-  }
-
-  if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-  if (search && search.charAt(0) !== '?') search = '?' + search;
-
-  pathname = pathname.replace(/[?#]/g, function(match) {
-    return encodeURIComponent(match);
-  });
-  search = search.replace('#', '%23');
-
-  return protocol + host + pathname + search + hash;
-};
-
-function urlResolve(source, relative) {
-  return urlParse(source, false, true).resolve(relative);
-}
-
-Url.prototype.resolve = function(relative) {
-  return this.resolveObject(urlParse(relative, false, true)).format();
-};
-
-function urlResolveObject(source, relative) {
-  if (!source) return relative;
-  return urlParse(source, false, true).resolveObject(relative);
-}
-
-Url.prototype.resolveObject = function(relative) {
-  if (isString(relative)) {
-    var rel = new Url();
-    rel.parse(relative, false, true);
-    relative = rel;
-  }
-
-  var result = new Url();
-  Object.keys(this).forEach(function(k) {
-    result[k] = this[k];
-  }, this);
-
-  // hash is always overridden, no matter what.
-  // even href="" will remove it.
-  result.hash = relative.hash;
-
-  // if the relative url is empty, then there's nothing left to do here.
-  if (relative.href === '') {
-    result.href = result.format();
-    return result;
-  }
-
-  // hrefs like //foo/bar always cut to the protocol.
-  if (relative.slashes && !relative.protocol) {
-    // take everything except the protocol from relative
-    Object.keys(relative).forEach(function(k) {
-      if (k !== 'protocol')
-        result[k] = relative[k];
-    });
-
-    //urlParse appends trailing / to urls like http://www.example.com
-    if (slashedProtocol[result.protocol] &&
-        result.hostname && !result.pathname) {
-      result.path = result.pathname = '/';
-    }
-
-    result.href = result.format();
-    return result;
-  }
-
-  if (relative.protocol && relative.protocol !== result.protocol) {
-    // if it's a known url protocol, then changing
-    // the protocol does weird things
-    // first, if it's not file:, then we MUST have a host,
-    // and if there was a path
-    // to begin with, then we MUST have a path.
-    // if it is file:, then the host is dropped,
-    // because that's known to be hostless.
-    // anything else is assumed to be absolute.
-    if (!slashedProtocol[relative.protocol]) {
-      Object.keys(relative).forEach(function(k) {
-        result[k] = relative[k];
-      });
-      result.href = result.format();
-      return result;
-    }
-
-    result.protocol = relative.protocol;
-    if (!relative.host && !hostlessProtocol[relative.protocol]) {
-      var relPath = (relative.pathname || '').split('/');
-      while (relPath.length && !(relative.host = relPath.shift()));
-      if (!relative.host) relative.host = '';
-      if (!relative.hostname) relative.hostname = '';
-      if (relPath[0] !== '') relPath.unshift('');
-      if (relPath.length < 2) relPath.unshift('');
-      result.pathname = relPath.join('/');
-    } else {
-      result.pathname = relative.pathname;
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    result.host = relative.host || '';
-    result.auth = relative.auth;
-    result.hostname = relative.hostname || relative.host;
-    result.port = relative.port;
-    // to support http.request
-    if (result.pathname || result.search) {
-      var p = result.pathname || '';
-      var s = result.search || '';
-      result.path = p + s;
-    }
-    result.slashes = result.slashes || relative.slashes;
-    result.href = result.format();
-    return result;
-  }
-
-  var isSourceAbs = (result.pathname && result.pathname.charAt(0) === '/'),
-      isRelAbs = (
-          relative.host ||
-          relative.pathname && relative.pathname.charAt(0) === '/'
-      ),
-      mustEndAbs = (isRelAbs || isSourceAbs ||
-                    (result.host && relative.pathname)),
-      removeAllDots = mustEndAbs,
-      srcPath = result.pathname && result.pathname.split('/') || [],
-      relPath = relative.pathname && relative.pathname.split('/') || [],
-      psychotic = result.protocol && !slashedProtocol[result.protocol];
-
-  // if the url is a non-slashed url, then relative
-  // links like ../.. should be able
-  // to crawl up to the hostname, as well.  This is strange.
-  // result.protocol has already been set by now.
-  // Later on, put the first path part into the host field.
-  if (psychotic) {
-    result.hostname = '';
-    result.port = null;
-    if (result.host) {
-      if (srcPath[0] === '') srcPath[0] = result.host;
-      else srcPath.unshift(result.host);
-    }
-    result.host = '';
-    if (relative.protocol) {
-      relative.hostname = null;
-      relative.port = null;
-      if (relative.host) {
-        if (relPath[0] === '') relPath[0] = relative.host;
-        else relPath.unshift(relative.host);
-      }
-      relative.host = null;
-    }
-    mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
-  }
-
-  if (isRelAbs) {
-    // it's absolute.
-    result.host = (relative.host || relative.host === '') ?
-                  relative.host : result.host;
-    result.hostname = (relative.hostname || relative.hostname === '') ?
-                      relative.hostname : result.hostname;
-    result.search = relative.search;
-    result.query = relative.query;
-    srcPath = relPath;
-    // fall through to the dot-handling below.
-  } else if (relPath.length) {
-    // it's relative
-    // throw away the existing file, and take the new path instead.
-    if (!srcPath) srcPath = [];
-    srcPath.pop();
-    srcPath = srcPath.concat(relPath);
-    result.search = relative.search;
-    result.query = relative.query;
-  } else if (!isNullOrUndefined(relative.search)) {
-    // just pull out the search.
-    // like href='?foo'.
-    // Put this after the other two cases because it simplifies the booleans
-    if (psychotic) {
-      result.hostname = result.host = srcPath.shift();
-      //occationaly the auth can get stuck only in host
-      //this especialy happens in cases like
-      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-      var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                       result.host.split('@') : false;
-      if (authInHost) {
-        result.auth = authInHost.shift();
-        result.host = result.hostname = authInHost.shift();
-      }
-    }
-    result.search = relative.search;
-    result.query = relative.query;
-    //to support http.request
-    if (!isNull(result.pathname) || !isNull(result.search)) {
-      result.path = (result.pathname ? result.pathname : '') +
-                    (result.search ? result.search : '');
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  if (!srcPath.length) {
-    // no path at all.  easy.
-    // we've already handled the other stuff above.
-    result.pathname = null;
-    //to support http.request
-    if (result.search) {
-      result.path = '/' + result.search;
-    } else {
-      result.path = null;
-    }
-    result.href = result.format();
-    return result;
-  }
-
-  // if a url ENDs in . or .., then it must get a trailing slash.
-  // however, if it ends in anything else non-slashy,
-  // then it must NOT get a trailing slash.
-  var last = srcPath.slice(-1)[0];
-  var hasTrailingSlash = (
-      (result.host || relative.host) && (last === '.' || last === '..') ||
-      last === '');
-
-  // strip single dots, resolve double dots to parent dir
-  // if the path tries to go above the root, `up` ends up > 0
-  var up = 0;
-  for (var i = srcPath.length; i >= 0; i--) {
-    last = srcPath[i];
-    if (last == '.') {
-      srcPath.splice(i, 1);
-    } else if (last === '..') {
-      srcPath.splice(i, 1);
-      up++;
-    } else if (up) {
-      srcPath.splice(i, 1);
-      up--;
-    }
-  }
-
-  // if the path is allowed to go above the root, restore leading ..s
-  if (!mustEndAbs && !removeAllDots) {
-    for (; up--; up) {
-      srcPath.unshift('..');
-    }
-  }
-
-  if (mustEndAbs && srcPath[0] !== '' &&
-      (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
-    srcPath.unshift('');
-  }
-
-  if (hasTrailingSlash && (srcPath.join('/').substr(-1) !== '/')) {
-    srcPath.push('');
-  }
-
-  var isAbsolute = srcPath[0] === '' ||
-      (srcPath[0] && srcPath[0].charAt(0) === '/');
-
-  // put the host back
-  if (psychotic) {
-    result.hostname = result.host = isAbsolute ? '' :
-                                    srcPath.length ? srcPath.shift() : '';
-    //occationaly the auth can get stuck only in host
-    //this especialy happens in cases like
-    //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-    var authInHost = result.host && result.host.indexOf('@') > 0 ?
-                     result.host.split('@') : false;
-    if (authInHost) {
-      result.auth = authInHost.shift();
-      result.host = result.hostname = authInHost.shift();
-    }
-  }
-
-  mustEndAbs = mustEndAbs || (result.host && srcPath.length);
-
-  if (mustEndAbs && !isAbsolute) {
-    srcPath.unshift('');
-  }
-
-  if (!srcPath.length) {
-    result.pathname = null;
-    result.path = null;
-  } else {
-    result.pathname = srcPath.join('/');
-  }
-
-  //to support request.http
-  if (!isNull(result.pathname) || !isNull(result.search)) {
-    result.path = (result.pathname ? result.pathname : '') +
-                  (result.search ? result.search : '');
-  }
-  result.auth = relative.auth || result.auth;
-  result.slashes = result.slashes || relative.slashes;
-  result.href = result.format();
-  return result;
-};
-
-Url.prototype.parseHost = function() {
-  var host = this.host;
-  var port = portPattern.exec(host);
-  if (port) {
-    port = port[0];
-    if (port !== ':') {
-      this.port = port.substr(1);
-    }
-    host = host.substr(0, host.length - port.length);
-  }
-  if (host) this.hostname = host;
-};
-
-function isString(arg) {
-  return typeof arg === "string";
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isNull(arg) {
-  return arg === null;
-}
-function isNullOrUndefined(arg) {
-  return  arg == null;
-}
-
-},{"punycode":6,"querystring":9}],11:[function(require,module,exports){
 var indexOf = require('indexof');
 
 var Object_keys = function (obj) {
@@ -28290,7 +26896,7 @@ exports.createContext = Script.createContext = function (context) {
     return copy;
 };
 
-},{"indexof":12}],12:[function(require,module,exports){
+},{"indexof":7}],7:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -28301,7 +26907,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],13:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 'use strict';
 
 // TODO Replace by a proper lightweight logging module, suited for the browser
@@ -28352,7 +26958,7 @@ minilog.enable = function() {
 
 module.exports = minilog;
 
-},{}],14:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -28364,7 +26970,7 @@ module.exports = {
   }
 };
 
-},{}],15:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var superagent = require('../third-party/superagent');
@@ -28465,7 +27071,7 @@ function mapResponse(response) {
 
 module.exports = new Request();
 
-},{"../third-party/superagent":17}],16:[function(require,module,exports){
+},{"../third-party/superagent":13}],11:[function(require,module,exports){
 'use strict';
 
 /*
@@ -28509,7 +27115,16 @@ var _s = {
 
 module.exports = _s;
 
-},{}],17:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var resolveUrl = require('resolve-url');
+
+exports.resolve = function(from, to) {
+  return resolveUrl(from, to);
+};
+
+},{"resolve-url":22}],13:[function(require,module,exports){
 ;(function(){
 
 /**
@@ -29894,7 +28509,7 @@ if (typeof exports == "object") {
   this["superagent"] = require("superagent");
 }})();
 
-},{"emitter":5,"indexof":5,"reduce":5,"superagent":5}],18:[function(require,module,exports){
+},{"emitter":5,"indexof":5,"reduce":5,"superagent":5}],14:[function(require,module,exports){
 'use strict';
 
 var minilog = require('minilog')
@@ -29902,30 +28517,28 @@ var minilog = require('minilog')
   , util = require('util');
 
 var FinalAction = require('./final_action')
-  , JsonWalker = require('./json_walker')
-  , JsonHalWalker = require('./json_hal_walker')
+  , mediaTypeRegistry = require('./media_type_registry')
+  , Walker = require('./walker')
   , mediaTypes = require('./media_types');
 
 var log = minilog('traverson');
 
 function Builder(mediaType, startUri) {
-  this.walker = this.createWalker(mediaType);
+  var adapter = this.createAdapter(mediaType);
+  this.walker = new Walker(adapter);
   this.walker.startUri = startUri;
   this.walker.request = this.request = standardRequest;
+  this.walker.parseJson = JSON.parse;
   this.finalAction = new FinalAction(this.walker);
 }
 
-Builder.prototype.createWalker = function(mediaType) {
-  switch (mediaType) {
-  case mediaTypes.JSON:
-    log.debug('creating new JsonWalker');
-    return new JsonWalker();
-  case mediaTypes.JSON_HAL:
-    log.debug('creating new JsonHalWalker');
-    return new JsonHalWalker();
-  default:
+Builder.prototype.createAdapter = function(mediaType) {
+  var AdapterType = mediaTypeRegistry.get(mediaType);
+  if (!AdapterType) {
     throw new Error('Unknown or unsupported media type: ' + mediaType);
   }
+  log.debug('creating new ' + AdapterType.name);
+  return new AdapterType(false, log);
 };
 
 Builder.prototype.follow = function() {
@@ -29951,6 +28564,11 @@ Builder.prototype.withRequestOptions = function(options) {
 
 Builder.prototype.withRequestLibrary = function(request) {
   this.walker.request = this.request = request;
+  return this;
+};
+
+Builder.prototype.parseResponseBodiesWith = function(parser) {
+  this.walker.parseJson = parser;
   return this;
 };
 
@@ -30023,7 +28641,7 @@ Builder.prototype.del = function(callback) {
 
 module.exports = Builder;
 
-},{"./final_action":19,"./json_hal_walker":20,"./json_walker":21,"./media_types":22,"minilog":13,"request":15,"util":14}],19:[function(require,module,exports){
+},{"./final_action":15,"./media_type_registry":17,"./media_types":18,"./walker":20,"minilog":8,"request":10,"util":9}],15:[function(require,module,exports){
 'use strict';
 
 var minilog = require('minilog')
@@ -30060,7 +28678,6 @@ FinalAction.prototype.getResource = function(nextStep, callback) {
   this.walker.process(nextStep, function(err, step) {
     log.debug('walker.process returned');
     if (err) { return callback(err, step.response, step.uri); }
-    // log.debug('resulting step: ' + JSON.stringify(step, null, 2))
 
     if (step.doc) {
       // return an embedded doc immediately
@@ -30126,244 +28743,122 @@ FinalAction.prototype.executeRequest = function(uri, request, method, body,
 
 module.exports = FinalAction;
 
-},{"minilog":13}],20:[function(require,module,exports){
-'use strict';
-
-var url = require('url')
-  , halfred = require('halfred')
-  , minilog = require('minilog')
-  , _s = require('underscore.string')
-  , Walker = require('./walker');
-
-var log = minilog('traverson');
-
-function JsonHalWalker() {}
-
-JsonHalWalker.prototype = new Walker();
-
-JsonHalWalker.prototype.findNextStep = function(doc, key) {
-  log.debug('parsing hal');
-  var halResource = halfred.parse(doc);
-
-  var parsedKey = parseKey(key);
-  resolveCurie(halResource, parsedKey);
-
-  // try _links first
-  var step = findLink(halResource, parsedKey);
-  if (step) {
-    return step;
-  }
-
-  // no link found, check for _embedded
-  step = findEmbedded(halResource, doc, parsedKey);
-  if (step) {
-    return step;
-  }
-  throw new Error('Could not find a link nor an embedded object for ' +
-      JSON.stringify(parsedKey) + ' in document:\n' + JSON.stringify(doc));
-};
-
-function parseKey(key) {
-  var match = key.match(/(.*)\[(.*):(.*)\]/);
-  if (match) {
-    return {
-      key: match[1],
-      secondaryKey: match[2],
-      secondaryValue: match[3],
-      index: null,
-    };
-  }
-  match = key.match(/(.*)\[(\d+)\]/);
-  if (match) {
-    return {
-      key: match[1],
-      secondaryKey: null,
-      secondaryValue: null,
-      index: match[2],
-    };
-  }
-  return {
-    key: key,
-    secondaryKey: null,
-    secondaryValue: null,
-    index: null,
-  };
-}
-
-function resolveCurie(halResource, parsedKey) {
-  if (halResource.hasCuries()) {
-    parsedKey.curie = halResource.reverseResolveCurie(parsedKey.key);
-  }
-}
-
-function findLink(halResource, parsedKey) {
-  var linkArray = halResource.linkArray(parsedKey.key);
-  if (!linkArray) {
-    linkArray = halResource.linkArray(parsedKey.curie);
-  }
-  if (!linkArray || linkArray.length === 0) {
-    return null;
-  }
-
-  var step = findLinkBySecondaryKey(linkArray, parsedKey);
-  if (!step) {
-    step = findLinkByIndex(linkArray, parsedKey);
-  }
-  if (!step) {
-    step = findLinkWithoutIndex(linkArray, parsedKey);
-  }
-  return step;
-}
-
-function findLinkBySecondaryKey(linkArray, parsedKey) {
-  if (parsedKey.secondaryKey &&
-      parsedKey.secondaryValue) {
-
-    // client selected a specific link by an explicit secondary key like 'name',
-    // so use it or fail
-    var i = 0;
-    for (; i < linkArray.length; i++) {
-      var val = linkArray[i][parsedKey.secondaryKey];
-      /* jshint -W116 */
-      if (val != null && val == parsedKey.secondaryValue) {
-        if (!linkArray[i].href) {
-          throw new Error(parsedKey.key + '[' + parsedKey.secondaryKey + ':' +
-              parsedKey.secondaryValue +
-              '] requested, but this link had no href attribute.');
-        }
-        log.debug('found hal link: ' + linkArray[i].href);
-        return { uri: linkArray[i].href };
-      }
-      /* jshint +W116 */
-    }
-    throw new Error(parsedKey.key + '[' + parsedKey.secondaryKey + ':' +
-        parsedKey.secondaryValue +
-       '] requested, but there is no such link.');
-  }
-  return null;
-}
-
-function findLinkByIndex(linkArray, parsedKey) {
-  if (typeof parsedKey.index !== 'undefined' && parsedKey.index !== null) {
-    // client specified an explicit array index for this link, so use it or fail
-    if (!linkArray[parsedKey.index]) {
-      throw new Error(parsedKey.key + '[' + parsedKey.index +
-          '] requested, but link array ' + parsedKey.key +
-          ' had no element at index ' + parsedKey.index);
-    }
-    if (!linkArray[parsedKey.index].href) {
-      throw new Error(parsedKey.key + '[' + parsedKey.index +
-          '] requested, but this link had no href attribute.');
-    }
-    log.debug('found hal link: ' + linkArray[parsedKey.index].href);
-    return { uri: linkArray[parsedKey.index].href };
-  }
-  return null;
-}
-
-function findLinkWithoutIndex(linkArray, parsedKey) {
-  // client did not specify an array index for this link, arbitrarily choose
-  // the first that has a href attribute
-  var link;
-  for (var index = 0; index < linkArray.length; index++) {
-    if (linkArray[index].href) {
-      link = linkArray[index];
-      break;
-    }
-  }
-  if (link) {
-    if (linkArray.length > 1) {
-      log.warn('Found HAL link array with more than one element for ' +
-          'key ' + parsedKey.key + ', arbitrarily choosing index ' + index +
-          ', because it was the first that had a href attribute.');
-    }
-    log.debug('found hal link: ' + link.href);
-    return { uri: link.href };
-  }
-  return null;
-}
-
-
-function findEmbedded(halResource, doc, parsedKey) {
-  log.debug('checking for embedded: ' + parsedKey.key +
-      (parsedKey.index ? parsedKey.index : ''));
-
-  var resourceArray = halResource.embeddedArray(parsedKey.key);
-  if (!resourceArray || resourceArray.length === 0) {
-    return null;
-  }
-  log.debug('Found an array of embedded resource for: ' + parsedKey.key);
-
-  var step = findeEmbeddedByIndex(resourceArray, parsedKey);
-  if (!step) {
-    step = findEmbeddedWithoutIndex(resourceArray, parsedKey);
-  }
-  return step;
-}
-
-function findeEmbeddedByIndex(resourceArray, parsedKey) {
-  if (parsedKey.index) {
-    // client specified an explicit array index, so use it or fail
-    if (!resourceArray[parsedKey.index]) {
-      throw new Error(parsedKey.key + '[' + parsedKey.index +
-          '] requested, but there is no such link. However, there is an ' +
-          'embedded resource array named ' + parsedKey.key +
-          ' but it does not have an element at index ' + parsedKey.index);
-    }
-    log.debug('Found an embedded resource for: ' + parsedKey.key + '[' +
-        parsedKey.index + ']');
-    return { doc: resourceArray[parsedKey.index].original() };
-  }
-  return null;
-}
-
-function findEmbeddedWithoutIndex(resourceArray, parsedKey) {
-  // client did not specify an array index, arbitrarily choose first
-  if (resourceArray.length > 1) {
-    log.warn('Found HAL embedded resource array with more than one element ' +
-        ' for key ' + parsedKey.key + ', arbitrarily choosing first element.');
-  }
-  return { doc: resourceArray[0].original() };
-}
-
-module.exports = JsonHalWalker;
-},{"./walker":23,"halfred":26,"minilog":13,"underscore.string":16,"url":10}],21:[function(require,module,exports){
-'use strict';
-
-var Walker = require('./walker');
-
-function JsonWalker() {}
-
-JsonWalker.prototype = new Walker();
-
-module.exports = JsonWalker;
-
-},{"./walker":23}],22:[function(require,module,exports){
-'use strict';
-
-module.exports = {
-  JSON: 'application/json',
-  JSON_HAL: 'application/hal+json',
-};
-
-},{}],23:[function(require,module,exports){
+},{"minilog":8}],16:[function(require,module,exports){
 'use strict';
 
 var jsonpathLib = require('JSONPath')
   , minilog = require('minilog')
-  , _s = require('underscore.string')
-  , uriTemplate = require('uri-template')
-  , url = require('url')
-  , util = require('util');
-
+  , _s = require('underscore.string');
 
 /* jshint -W061 */
 // wtf jshint? eval can be harmful? But that is not eval, it's JSONPath#eval
 var jsonpath = jsonpathLib.eval;
 /* jshint +W061 */
+
+function JsonAdapter(contentNegotiation, log) {
+  this.contentNegotiation = contentNegotiation;
+  this.log = log;
+}
+
+JsonAdapter.prototype.findNextStep = function(doc, link) {
+  this.log.debug('extracting link ' + link + ' from ' + JSON.stringify(doc));
+  var uri;
+  if (this.testJSONPath(link)) {
+    return { uri: this.resolveJSONPath(link, doc) };
+  } else if (doc[link]) {
+    return { uri : doc[link] };
+  } else {
+    throw new Error('Could not find property ' + link +
+        ' in document:\n' + JSON.stringify(doc));
+  }
+};
+
+JsonAdapter.prototype.testJSONPath = function(link) {
+  return _s.startsWith(link, '$.') || _s.startsWith(link, '$[');
+};
+
+JsonAdapter.prototype.resolveJSONPath = function(link, doc) {
+  var matches = jsonpath(doc, link);
+  if (matches.length === 1) {
+    var uri = matches[0];
+    if (!uri) {
+      throw new Error('JSONPath expression ' + link +
+        ' was resolved but the result was null, undefined or an empty' +
+        ' string in document:\n' + JSON.stringify(doc));
+    }
+    return uri;
+  } else if (matches.length > 1) {
+    // ambigious match
+    throw new Error('JSONPath expression ' + link +
+      ' returned more than one match in document:\n' +
+      JSON.stringify(doc));
+  } else {
+    // no match at all
+    throw new Error('JSONPath expression ' + link +
+      ' returned no match in document:\n' + JSON.stringify(doc));
+  }
+};
+
+module.exports = JsonAdapter;
+
+},{"JSONPath":21,"minilog":8,"underscore.string":11}],17:[function(require,module,exports){
+'use strict';
+
+var mediaTypes = require('./media_types');
+
+var registry = {};
+
+exports.register = function register(contentType, constructor) {
+  registry[contentType] = constructor;
+};
+
+exports.get = function get(contentType) {
+  return registry[contentType];
+};
+
+exports.register(mediaTypes.CONTENT_NEGOTIATION,
+    require('./negotiation_adapter'));
+exports.register(mediaTypes.JSON, require('./json_adapter'));
+
+},{"./json_adapter":16,"./media_types":18,"./negotiation_adapter":19}],18:[function(require,module,exports){
+'use strict';
+
+module.exports = {
+  CONTENT_NEGOTIATION: 'content-negotiation',
+  JSON: 'application/json',
+  JSON_HAL: 'application/hal+json',
+};
+
+},{}],19:[function(require,module,exports){
+'use strict';
+
+function NegotiationAdapter() {
+  this.contentNegotiation = true;
+}
+
+NegotiationAdapter.prototype.findNextStep = function(doc, link) {
+  throw new Error('Content negotiation did not happen');
+};
+
+module.exports = NegotiationAdapter;
+
+},{}],20:[function(require,module,exports){
+'use strict';
+
+var minilog = require('minilog')
+  , _s = require('underscore.string')
+  , uriTemplate = require('url-template')
+  , url = require('url')
+  , util = require('util');
+
+var JsonAdapter = require('./json_adapter')
+  , mediaTypeRegistry = require('./media_type_registry');
+
 var log = minilog('traverson');
 
-function Walker() {}
+function Walker(adapter) {
+  this.adapter = adapter || new JsonAdapter(false, log);
+}
 
 /*
  * Walks from resource to resource along the path given by the link relations
@@ -30371,9 +28866,7 @@ function Walker() {}
  * the given callback with the last resulting step.
  */
 Walker.prototype.walk = function(callback) {
-
   var self = this;
-
   var nextStep = {
     uri: this.resolveUriTemplate(this.startUri, this.templateParameters, 0)
   };
@@ -30420,7 +28913,7 @@ Walker.prototype.walk = function(callback) {
         log.debug('next link: ' + link);
 
         try {
-          nextStep = self.findNextStep(doc, link);
+          nextStep = self.adapter.findNextStep(doc, link);
         } catch (e) {
           log.error('could not find next step');
           log.error(e);
@@ -30450,6 +28943,9 @@ Walker.prototype.walk = function(callback) {
       return callback(null, nextStep, finalStep);
     }
   }
+
+  // this is the initial call of executeNextStep which starts the link rel
+  // walking process
   executeNextStep();
 };
 
@@ -30469,12 +28965,26 @@ Walker.prototype.process = function(step, callback) {
 
 Walker.prototype.get = function(step, callback) {
   log.debug('request to ' + step.uri);
+  var self = this;
   this.request.get(step.uri, function(err, response, body) {
+    log.debug('request.get returned');
+    if (err) { return callback(err, step); }
     if (body && !response.body) {
       response.body = body;
     }
-    log.debug('request.get returned');
-    if (err) { return callback(err, step); }
+    if (self.adapter.contentNegotiation &&
+        response &&
+        response.headers &&
+        response.headers['content-type']) {
+      var contentType = response.headers['content-type'].split(/[; ]/)[0];
+      var AdapterType = mediaTypeRegistry.get(contentType);
+      if (!AdapterType) {
+        return callback(new Error('Unknown content type for content ' +
+            'negotiation: ' + contentType, step));
+      }
+      // switch to new Adapter depending on Content-Type header of server
+      self.adapter = new AdapterType(self.adapter.contentNegotiation, log);
+    }
     log.debug('request to ' + step.uri + ' finished (' + response.statusCode +
         ')');
     step.response = response;
@@ -30508,7 +29018,7 @@ Walker.prototype.parse = function(step) {
   }
 
   try {
-    return JSON.parse(step.response.body);
+    return this.parseJson(step.response.body);
   } catch (e) {
     if (e.name === 'SyntaxError') {
       throw jsonError(step.uri, step.response.body);
@@ -30517,22 +29027,11 @@ Walker.prototype.parse = function(step) {
   }
 };
 
-Walker.prototype.findNextStep = function(doc, link) {
-  log.debug('extracting link ' + link + ' from ' + JSON.stringify(doc));
-  var uri;
-  if (this.testJSONPath(link)) {
-    return { uri: this.resolveJSONPath(link, doc) };
-  } else if (doc[link]) {
-    return { uri : doc[link] };
-  } else {
-    throw new Error('Could not find property ' + link +
-        ' in document:\n' + JSON.stringify(doc));
-  }
-};
-
 Walker.prototype.postProcessStep = function(nextStep, lastStep) {
   // default behaviour: resolve full/absolute/relative url via url.resolve
   if (nextStep.uri) {
+    // TODO FIXME This does not work with https,
+    // should be startsWith(/https?:/-ignore-case)
     if (!_s.startsWith(nextStep.uri, 'http://')) {
       if (this.resolveRelative && lastStep && lastStep.uri) {
         if (_s.startsWith(nextStep.uri, '/') &&
@@ -30544,32 +29043,6 @@ Walker.prototype.postProcessStep = function(nextStep, lastStep) {
         nextStep.uri = url.resolve(this.startUri, nextStep.uri);
       }
     }
-  }
-};
-
-Walker.prototype.testJSONPath = function(link) {
-  return _s.startsWith(link, '$.') || _s.startsWith(link, '$[');
-};
-
-Walker.prototype.resolveJSONPath = function(link, doc) {
-  var matches = jsonpath(doc, link);
-  if (matches.length === 1) {
-    var uri = matches[0];
-    if (!uri) {
-      throw new Error('JSONPath expression ' + link +
-        ' was resolved but the result was null, undefined or an empty' +
-        ' string in document:\n' + JSON.stringify(doc));
-    }
-    return uri;
-  } else if (matches.length > 1) {
-    // ambigious match
-    throw new Error('JSONPath expression ' + link +
-      ' returned more than one match in document:\n' +
-      JSON.stringify(doc));
-  } else {
-    // no match at all
-    throw new Error('JSONPath expression ' + link +
-      ' returned no match in document:\n' + JSON.stringify(doc));
   }
 };
 
@@ -30619,28 +29092,38 @@ function jsonError(uri, body) {
 
 module.exports = Walker;
 
-},{"JSONPath":25,"minilog":13,"underscore.string":16,"uri-template":30,"url":10,"util":14}],24:[function(require,module,exports){
-/* jshint -W116 */
-var nativeIsArray = Array.isArray;
-
-// Is a given value an array?
-// Delegates to ECMA5's native Array.isArray
-exports.isArray = nativeIsArray || function(obj) {
-  return Object.prototype.toString.call(obj) == '[object Array]';
-};
-/* jshint +W116 */
-
-},{}],25:[function(require,module,exports){
+},{"./json_adapter":16,"./media_type_registry":17,"minilog":8,"underscore.string":11,"url":12,"url-template":23,"util":9}],21:[function(require,module,exports){
 /* JSONPath 0.8.0 - XPath for JSON
  *
  * Copyright (c) 2007 Stefan Goessner (goessner.net)
  * Licensed under the MIT (MIT-LICENSE.txt) licence.
  */
 
-var vm = require('vm'),
-    _ = require('underscore');
+var isNode = false;
+(function(exports, require) {
+
+// Keep compatibility with old browsers
+if (!Array.isArray) {
+  Array.isArray = function(vArg) {
+    return Object.prototype.toString.call(vArg) === "[object Array]";
+  };
+}
+
+// Make sure to know if we are in real node or not (the `require` variable
+// could actually be require.js, for example.
+var isNode = typeof module !== 'undefined' && !!module.exports;
+
+var vm = isNode ?
+    require('vm') : {
+      runInNewContext: function(expr, context) { with (context) return eval(expr); }
+    };
 exports.eval = jsonPath;
+
 var cache = {};
+
+function push(arr, elem) { arr = arr.slice(); arr.push(elem); return arr; }
+function unshift(elem, arr) { arr = arr.slice(); arr.unshift(elem); return arr; }
+
 function jsonPath(obj, expr, arg) {
    var P = {
       resultType: arg && arg.resultType || "VALUE",
@@ -30648,124 +29131,733 @@ function jsonPath(obj, expr, arg) {
       wrap: (arg && arg.hasOwnProperty('wrap')) ? arg.wrap : true,
       sandbox: (arg && arg.sandbox) ? arg.sandbox : {},
       normalize: function(expr) {
-         if(cache[expr]) {
-            return cache[expr];
-         }
-
+         if (cache[expr]) return cache[expr];
          var subx = [];
-         var ret = expr.replace(/[\['](\??\(.*?\))[\]']/g, function($0,$1){return "[#"+(subx.push($1)-1)+"]";})
-                    .replace(/'?\.'?|\['?/g, ";")
-                    .replace(/;;;|;;/g, ";..;")
-                    .replace(/;$|'?\]|'$/g, "")
-                    .replace(/#([0-9]+)/g, function($0,$1){return subx[$1];});
-         cache[expr] = ret;
-         return ret;
+         var normalized = expr.replace(/[\['](\??\(.*?\))[\]']/g, function($0,$1){return "[#"+(subx.push($1)-1)+"]";})
+                     .replace(/'?\.'?|\['?/g, ";")
+                     .replace(/(;)?(\^+)(;)?/g, function(_, front, ups, back) { return ';' + ups.split('').join(';') + ';'; })
+                     .replace(/;;;|;;/g, ";..;")
+                     .replace(/;$|'?\]|'$/g, "");
+         var exprList = normalized.split(';').map(function(expr) {
+            var match = expr.match(/#([0-9]+)/);
+            return !match || !match[1] ? expr : subx[match[1]];
+         })
+         return cache[expr] = exprList;
       },
       asPath: function(path) {
-         var x = path.split(";"), p = "$";
+         var x = path, p = "$";
          for (var i=1,n=x.length; i<n; i++)
             p += /^[0-9*]+$/.test(x[i]) ? ("["+x[i]+"]") : ("['"+x[i]+"']");
          return p;
       },
-      store: function(p, v) {
-         if (p) {
-             if (P.resultType == "PATH") {
-                 P.result[P.result.length] = P.asPath(p);
-             }
-             else {
-                 if(_.isArray(v) && P.flatten) {
-                     if(!P.result) P.result = [];
-                     if(!_.isArray(P.result)) P.result = [P.result];
-                     P.result = P.result.concat(v);
-                 }
-                 else {
-                     if(P.result) {
-                         if(!_.isArray(P.result)) P.result = [P.result];
-                         if(_.isArray(v) && P.flatten) {
-                             P.result = P.result.concat(v);
-                         }
-                         else {
-                             P.result[P.result.length] = v;
-                         }
-                     }
-                     else {
-                         P.result = v;
-                     }
-                 }
-             }
-         }
-         return !!p;
-      },
       trace: function(expr, val, path) {
-         if (expr) {
-            var x = expr.split(";"), loc = x.shift();
-            x = x.join(";");
-            if (val && val.hasOwnProperty(loc))
-               P.trace(x, val[loc], path + ";" + loc);
-            else if (loc === "*")
-               P.walk(loc, x, val, path, function(m,l,x,v,p) { P.trace(m+";"+x,v,p); });
-            else if (loc === "..") {
-               P.trace(x, val, path);
-               P.walk(loc, x, val, path, function(m,l,x,v,p) { typeof v[m] === "object" && P.trace("..;"+x,v[m],p+";"+m); });
-            }
-            else if (/,/.test(loc)) { // [name1,name2,...]
-               for (var s=loc.split(/'?,'?/),i=0,n=s.length; i<n; i++)
-                  P.trace(s[i]+";"+x, val, path);
-            }
-            else if (/^\(.*?\)$/.test(loc)) // [(expr)]
-               P.trace(P.eval(loc, val, path.substr(path.lastIndexOf(";")+1))+";"+x, val, path);
-            else if (/^\?\(.*?\)$/.test(loc)) // [?(expr)]
-               P.walk(loc, x, val, path, function(m,l,x,v,p) { if (P.eval(l.replace(/^\?\((.*?)\)$/,"$1"),v[m],m)) P.trace(m+";"+x,v,p); });
-            else if (/^(-?[0-9]*):(-?[0-9]*):?([0-9]*)$/.test(loc)) // [start:end:step]  python slice syntax
-               P.slice(loc, x, val, path);
+         // no expr to follow? return path and value as the result of this trace branch
+         if (!expr.length) return [{path: path, value: val}];
+
+         var loc = expr[0], x = expr.slice(1);
+         // the parent sel computation is handled in the frame above using the
+         // ancestor object of val
+         if (loc === '^') return path.length ? [{path: path.slice(0,-1), expr: x, isParentSelector: true}] : [];
+
+         // we need to gather the return value of recursive trace calls in order to
+         // do the parent sel computation.
+         var ret = [];
+         function addRet(elems) { ret = ret.concat(elems); }
+
+         if (val && val.hasOwnProperty(loc)) // simple case, directly follow property
+            addRet(P.trace(x, val[loc], push(path, loc)));
+         else if (loc === "*") { // any property
+            P.walk(loc, x, val, path, function(m,l,x,v,p) {
+               addRet(P.trace(unshift(m, x), v, p)); });
          }
-         else
-            P.store(path, val);
+         else if (loc === "..") { // all chid properties
+            addRet(P.trace(x, val, path));
+            P.walk(loc, x, val, path, function(m,l,x,v,p) {
+               if (typeof v[m] === "object")
+                  addRet(P.trace(unshift("..", x), v[m], push(p, m)));
+            });
+         }
+         else if (loc[0] === '(') { // [(expr)]
+            addRet(P.trace(unshift(P.eval(loc, val, path[path.length], path),x), val, path));
+         }
+         else if (loc.indexOf('?(') === 0) { // [?(expr)]
+            P.walk(loc, x, val, path, function(m,l,x,v,p) {
+               if (P.eval(l.replace(/^\?\((.*?)\)$/,"$1"),v[m],m, path))
+                  addRet(P.trace(unshift(m,x),v,p));
+            });
+         }
+         else if (loc.indexOf(',') > -1) { // [name1,name2,...]
+            for (var parts = loc.split(','), i = 0; i < parts.length; i++)
+               addRet(P.trace(unshift(parts[i], x), val, path));
+         }
+         else if (/^(-?[0-9]*):(-?[0-9]*):?([0-9]*)$/.test(loc)) { // [start:end:step]  python slice syntax
+            addRet(P.slice(loc, x, val, path));
+         }
+
+         // we check the resulting values for parent selections. for parent
+         // selections we discard the value object and continue the trace with the
+         // current val object
+         return ret.reduce(function(all, ea) {
+            return all.concat(ea.isParentSelector ? P.trace(ea.expr, val, ea.path) : [ea]);
+         }, []);
       },
       walk: function(loc, expr, val, path, f) {
-         if (val instanceof Array) {
-            for (var i=0,n=val.length; i<n; i++)
-               if (i in val)
-                  f(i,loc,expr,val,path);
-         }
-         else if (typeof val === "object") {
+         if (Array.isArray(val))
+            for (var i = 0, n = val.length; i < n; i++)
+               f(i, loc, expr, val, path);
+         else if (typeof val === "object")
             for (var m in val)
                if (val.hasOwnProperty(m))
-                  f(m,loc,expr,val,path);
-         }
+                  f(m, loc, expr, val, path);
       },
       slice: function(loc, expr, val, path) {
-         if (val instanceof Array) {
-            var len=val.length, start=0, end=len, step=1;
-            loc.replace(/^(-?[0-9]*):(-?[0-9]*):?(-?[0-9]*)$/g, function($0,$1,$2,$3){start=parseInt($1||start);end=parseInt($2||end);step=parseInt($3||step);});
-            start = (start < 0) ? Math.max(0,start+len) : Math.min(len,start);
-            end   = (end < 0)   ? Math.max(0,end+len)   : Math.min(len,end);
-            for (var i=start; i<end; i+=step)
-               P.trace(i+";"+expr, val, path);
-         }
+         if (!Array.isArray(val)) return;
+         var len = val.length, parts = loc.split(':'),
+             start = (parts[0] && parseInt(parts[0])) || 0,
+             end = (parts[1] && parseInt(parts[1])) || len,
+             step = (parts[2] && parseInt(parts[2])) || 1;
+         start = (start < 0) ? Math.max(0,start+len) : Math.min(len,start);
+         end   = (end < 0)   ? Math.max(0,end+len)   : Math.min(len,end);
+         var ret = [];
+         for (var i = start; i < end; i += step)
+            ret = ret.concat(P.trace(unshift(i,expr), val, path));
+         return ret;
       },
-      eval: function(x, _v, _vname) {
-         P.sandbox["_v"] = _v;
+      eval: function(code, _v, _vname, path) {
+         if (!$ || !_v) return false;
+         if (code.indexOf("@path") > -1) {
+            P.sandbox["_path"] = P.asPath(path.concat([_vname]));
+            code = code.replace(/@path/g, "_path");
+         }
+         if (code.indexOf("@") > -1) {
+            P.sandbox["_v"] = _v;
+            code = code.replace(/@/g, "_v");
+         }
          try {
-             return $ && _v && vm.runInNewContext(x.replace(/@/g, "_v"), P.sandbox);
+             return vm.runInNewContext(code, P.sandbox);
          }
          catch(e) {
              console.log(e);
-             throw new SyntaxError("jsonPath: " + e.message + ": " + x.replace(/@/g, "_v").replace(/\^/g, "_a"));
+             throw new Error("jsonPath: " + e.message + ": " + code);
          }
       }
    };
-   P.result = P.wrap === true ? [] : undefined;
 
    var $ = obj;
-   if (expr && obj && (P.resultType == "VALUE" || P.resultType == "PATH")) {
-      P.trace(P.normalize(expr).replace(/^\$;/,""), obj, "$");
-      if(!_.isArray(P.result) && P.wrap) P.result = [P.result];
-      return P.result ? P.result : false;
+   var resultType = P.resultType.toLowerCase();
+   if (expr && obj && (resultType == "value" || resultType == "path")) {
+      var exprList = P.normalize(expr);
+      if (exprList[0] === "$" && exprList.length > 1) exprList.shift();
+      var result = P.trace(exprList, obj, ["$"]);
+      result = result.filter(function(ea) { return ea && !ea.isParentSelector; });
+      if (!result.length) return P.wrap ? [] : false;
+      if (result.length === 1 && !P.wrap && !Array.isArray(result[0].value)) return result[0][resultType] || false;
+      return result.reduce(function(result, ea) {
+         var valOrPath = ea[resultType];
+         if (resultType === 'path') valOrPath = P.asPath(valOrPath);
+         if (P.flatten && Array.isArray(valOrPath)) {
+            result = result.concat(valOrPath);
+         } else {
+            result.push(valOrPath);
+         }
+         return result;
+      }, []);
    }
-} 
+}
+})(typeof exports === 'undefined' ? this['jsonPath'] = {} : exports, typeof require == "undefined" ? null : require);
 
-},{"underscore":24,"vm":11}],26:[function(require,module,exports){
+},{"vm":6}],22:[function(require,module,exports){
+// Copyright 2014 Simon Lydell
+// X11 (“MIT”) Licensed. (See LICENSE.)
+
+void (function(root, factory) {
+  if (typeof define === "function" && define.amd) {
+    define(factory)
+  } else if (typeof exports === "object") {
+    module.exports = factory()
+  } else {
+    root.resolveUrl = factory()
+  }
+}(this, function() {
+
+  function resolveUrl(/* ...urls */) {
+    var numUrls = arguments.length
+
+    if (numUrls === 0) {
+      throw new Error("resolveUrl requires at least one argument; got none.")
+    }
+
+    var base = document.createElement("base")
+    base.href = arguments[0]
+
+    if (numUrls === 1) {
+      return base.href
+    }
+
+    var head = document.getElementsByTagName("head")[0]
+    head.insertBefore(base, head.firstChild)
+
+    var a = document.createElement("a")
+    var resolved
+
+    for (var index = 1; index < numUrls; index++) {
+      a.href = arguments[index]
+      resolved = a.href
+      base.href = resolved
+    }
+
+    head.removeChild(base)
+
+    return resolved
+  }
+
+  return resolveUrl
+
+}));
+
+},{}],23:[function(require,module,exports){
+(function (root, factory) {
+    if (typeof exports === 'object') {
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        define([], factory);
+    } else {
+        root.urltemplate = factory();
+    }
+}(this, function () {
+  /**
+   * @constructor
+   */
+  function UrlTemplate() {
+  }
+
+  /**
+   * @private
+   * @param {string} str
+   * @return {string}
+   */
+  UrlTemplate.prototype.encodeReserved = function (str) {
+    return str.split(/(%[0-9A-Fa-f]{2})/g).map(function (part) {
+      if (!/%[0-9A-Fa-f]/.test(part)) {
+        part = encodeURI(part);
+      }
+      return part;
+    }).join('');
+  };
+
+  /**
+   * @private
+   * @param {string} operator
+   * @param {string} value
+   * @param {string} key
+   * @return {string}
+   */
+  UrlTemplate.prototype.encodeValue = function (operator, value, key) {
+    value = (operator === '+' || operator === '#') ? this.encodeReserved(value) : encodeURIComponent(value);
+
+    if (key) {
+      return encodeURIComponent(key) + '=' + value;
+    } else {
+      return value;
+    }
+  };
+
+  /**
+   * @private
+   * @param {*} value
+   * @return {boolean}
+   */
+  UrlTemplate.prototype.isDefined = function (value) {
+    return value !== undefined && value !== null;
+  };
+
+  /**
+   * @private
+   * @param {string}
+   * @return {boolean}
+   */
+  UrlTemplate.prototype.isKeyOperator = function (operator) {
+    return operator === ';' || operator === '&' || operator === '?';
+  };
+
+  /**
+   * @private
+   * @param {Object} context
+   * @param {string} operator
+   * @param {string} key
+   * @param {string} modifier
+   */
+  UrlTemplate.prototype.getValues = function (context, operator, key, modifier) {
+    var value = context[key],
+        result = [];
+
+    if (this.isDefined(value) && value !== '') {
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        value = value.toString();
+
+        if (modifier && modifier !== '*') {
+          value = value.substring(0, parseInt(modifier, 10));
+        }
+
+        result.push(this.encodeValue(operator, value, this.isKeyOperator(operator) ? key : null));
+      } else {
+        if (modifier === '*') {
+          if (Array.isArray(value)) {
+            value.filter(this.isDefined).forEach(function (value) {
+              result.push(this.encodeValue(operator, value, this.isKeyOperator(operator) ? key : null));
+            }, this);
+          } else {
+            Object.keys(value).forEach(function (k) {
+              if (this.isDefined(value[k])) {
+                result.push(this.encodeValue(operator, value[k], k));
+              }
+            }, this);
+          }
+        } else {
+          var tmp = [];
+
+          if (Array.isArray(value)) {
+            value.filter(this.isDefined).forEach(function (value) {
+              tmp.push(this.encodeValue(operator, value));
+            }, this);
+          } else {
+            Object.keys(value).forEach(function (k) {
+              if (this.isDefined(value[k])) {
+                tmp.push(encodeURIComponent(k));
+                tmp.push(this.encodeValue(operator, value[k].toString()));
+              }
+            }, this);
+          }
+
+          if (this.isKeyOperator(operator)) {
+            result.push(encodeURIComponent(key) + '=' + tmp.join(','));
+          } else if (tmp.length !== 0) {
+            result.push(tmp.join(','));
+          }
+        }
+      }
+    } else {
+      if (operator === ';') {
+        result.push(encodeURIComponent(key));
+      } else if (value === '' && (operator === '&' || operator === '?')) {
+        result.push(encodeURIComponent(key) + '=');
+      } else if (value === '') {
+        result.push('');
+      }
+    }
+    return result;
+  };
+
+  /**
+   * @param {string} template
+   * @return {function(Object):string}
+   */
+  UrlTemplate.prototype.parse = function (template) {
+    var that = this;
+    var operators = ['+', '#', '.', '/', ';', '?', '&'];
+
+    return {
+      expand: function (context) {
+        return template.replace(/\{([^\{\}]+)\}|([^\{\}]+)/g, function (_, expression, literal) {
+          if (expression) {
+            var operator = null,
+                values = [];
+
+            if (operators.indexOf(expression.charAt(0)) !== -1) {
+              operator = expression.charAt(0);
+              expression = expression.substr(1);
+            }
+
+            expression.split(/,/g).forEach(function (variable) {
+              var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
+              values.push.apply(values, that.getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
+            });
+
+            if (operator && operator !== '+') {
+              var separator = ',';
+
+              if (operator === '?') {
+                separator = '&';
+              } else if (operator !== '#') {
+                separator = operator;
+              }
+              return (values.length !== 0 ? operator : '') + values.join(separator);
+            } else {
+              return values.join(',');
+            }
+          } else {
+            return that.encodeReserved(literal);
+          }
+        });
+      }
+    };
+  };
+
+  return new UrlTemplate();
+}));
+
+},{}],24:[function(require,module,exports){
+'use strict';
+
+var minilog = require('minilog')
+  , mediaTypes = require('./lib/media_types')
+  , Builder = require('./lib/builder')
+  , mediaTypes = require('./lib/media_types')
+  , mediaTypeRegistry = require('./lib/media_type_registry');
+
+// activate this line to enable logging
+// require('minilog').enable();
+
+// export builder for traverson-angular
+exports._Builder = Builder;
+
+exports.from = function from(uri) {
+  return {
+    newRequest: function() {
+      return new Builder(mediaTypes.CONTENT_NEGOTIATION, uri);
+    }
+  };
+};
+
+// Provided for backward compatibility with version 0.15.0 and below.
+// The preferred way to set the media type explicitly is now calling
+// mediaType(...) on the builder - or use content negotiation.
+exports.json = {
+  from: function(uri) {
+    return {
+      newRequest: function() {
+        return new Builder(mediaTypes.JSON, uri);
+      }
+    };
+  }
+},
+
+// Provided for backward compatibility with version 0.15.0 and below.
+// The preferred way to set the media type explicitly is now calling
+// mediaType(...) on the builder - or use content negotiation.
+exports.jsonHal = {
+  from: function(uri) {
+    if (!mediaTypeRegistry.get(mediaTypes.JSON_HAL)) {
+      throw new Error('JSON HAL adapter is not registered. From version ' +
+        '1.0.0 on, Traverson has no longer built-in support for ' +
+        'application/hal+json. HAL support was moved to a separate, optional ' +
+        'plug-in. See https://github.com/basti1302/traverson-hal');
+    }
+    return {
+      newRequest: function() {
+        return new Builder(mediaTypes.JSON_HAL, uri);
+      }
+    };
+  }
+};
+
+// expose media type registry so that media type plug-ins can register
+// themselves
+exports.registerMediaType = mediaTypeRegistry.register;
+
+},{"./lib/builder":14,"./lib/media_type_registry":17,"./lib/media_types":18,"minilog":8}],25:[function(require,module,exports){
+/* global angular */
+'use strict';
+
+var traverson = require('traverson');
+
+var ng;
+if (typeof angular !== 'undefined') {
+  // angular is defined globally, use this
+  ng = angular;
+} else {
+  // angular is not defined globally, try to require it
+  ng = require('angular');
+  if (typeof ng.module !== 'function') {
+    throw new Error('angular has either to be provided globally or made ' +
+        'available as a shim for browserify. (Also, if the angular module on ' +
+        'npm would actually be a proper CommonJS module, this error ' +
+        'wouldn\'t be a thing.)');
+  }
+}
+
+var traversonAngular = ng.module('traverson', []);
+
+traversonAngular.factory('traverson', function traversonFactory($q) {
+  var Builder = traverson._Builder;
+  var originalMethods = {
+    get: Builder.prototype.get,
+    getResource: Builder.prototype.getResource,
+    getUri: Builder.prototype.getUri,
+    post: Builder.prototype.post,
+    put: Builder.prototype.put,
+    patch: Builder.prototype.patch,
+    del: Builder.prototype.del,
+  };
+
+  function promisify(that, originalMethod, callback) {
+    var deferred = $q.defer();
+    originalMethod.call(that, function(err, result, uri) {
+      if (err) {
+        err.result = result;
+        err.uri = uri;
+        deferred.reject(err);
+      } else {
+        deferred.resolve(result);
+      }
+    });
+    return deferred.promise;
+  }
+
+  Builder.prototype.get = function(callback) {
+    return promisify(this, originalMethods.get, callback);
+  };
+
+  Builder.prototype.getResource = function(callback) {
+    return promisify(this, originalMethods.getResource, callback);
+  };
+
+  Builder.prototype.getUri = function(callback) {
+    return promisify(this, originalMethods.getUri, callback);
+  };
+
+  Builder.prototype.post = function(callback) {
+    return promisify(this, originalMethods.post, callback);
+  };
+
+  Builder.prototype.put = function(callback) {
+    return promisify(this, originalMethods.put, callback);
+  };
+
+  Builder.prototype.patch = function(callback) {
+    return promisify(this, originalMethods.patch, callback);
+  };
+
+  Builder.prototype.del = function(callback) {
+    return promisify(this, originalMethods.del, callback);
+  };
+
+  return traverson;
+});
+
+module.exports = traversonAngular;
+
+},{"angular":5,"traverson":24}],26:[function(require,module,exports){
+'use strict';
+
+var halfred = require('halfred');
+
+function JsonHalAdapter(contentNegotiation, log) {
+  this.contentNegotiation = contentNegotiation;
+  this.log = log;
+}
+
+JsonHalAdapter.mediaType = 'application/hal+json';
+
+JsonHalAdapter.prototype.findNextStep = function(doc, key) {
+  this.log.debug('parsing hal');
+  var halResource = halfred.parse(doc);
+
+  var parsedKey = parseKey(key);
+  resolveCurie(halResource, parsedKey);
+
+  // try _links first
+  var step = findLink(halResource, parsedKey, this.log);
+  if (step) {
+    return step;
+  }
+
+  // no link found, check for _embedded
+  step = findEmbedded(halResource, doc, parsedKey, this.log);
+  if (step) {
+    return step;
+  }
+  throw new Error('Could not find a link nor an embedded object for ' +
+      JSON.stringify(parsedKey) + ' in document:\n' + JSON.stringify(doc));
+};
+
+function parseKey(key) {
+  var match = key.match(/(.*)\[(.*):(.*)\]/);
+  // ea:admin[title:Kate] => access by secondary attribute
+  if (match) {
+    return {
+      key: match[1],
+      secondaryKey: match[2],
+      secondaryValue: match[3],
+      index: null,
+      all: false,
+    };
+  }
+  // ea:order[3] => index access into embedded array
+  match = key.match(/(.*)\[(\d+)\]/);
+  if (match) {
+    return {
+      key: match[1],
+      secondaryKey: null,
+      secondaryValue: null,
+      index: match[2],
+      all: false,
+    };
+  }
+  // ea:order[$all] => meta-key, return full array
+  match = key.match(/(.*)\[\$all\]/);
+  if (match) {
+    return {
+      key: match[1],
+      secondaryKey: null,
+      secondaryValue: null,
+      index: null,
+      all: true,
+    };
+  }
+  // ea:order => simple link relation
+  return {
+    key: key,
+    secondaryKey: null,
+    secondaryValue: null,
+    index: null,
+    all: false,
+  };
+}
+
+function resolveCurie(halResource, parsedKey) {
+  if (halResource.hasCuries()) {
+    parsedKey.curie = halResource.reverseResolveCurie(parsedKey.key);
+  }
+}
+
+function findLink(halResource, parsedKey, log) {
+  var linkArray = halResource.linkArray(parsedKey.key);
+  if (!linkArray) {
+    linkArray = halResource.linkArray(parsedKey.curie);
+  }
+  if (!linkArray || linkArray.length === 0) {
+    return null;
+  }
+
+  var step = findLinkBySecondaryKey(linkArray, parsedKey, log);
+  if (!step) {
+    step = findLinkByIndex(linkArray, parsedKey, log);
+  }
+  if (!step) {
+    step = findLinkWithoutIndex(linkArray, parsedKey, log);
+  }
+  return step;
+}
+
+function findLinkBySecondaryKey(linkArray, parsedKey, log) {
+  if (parsedKey.secondaryKey &&
+      parsedKey.secondaryValue) {
+
+    // client selected a specific link by an explicit secondary key like 'name',
+    // so use it or fail
+    var i = 0;
+    for (; i < linkArray.length; i++) {
+      var val = linkArray[i][parsedKey.secondaryKey];
+      /* jshint -W116 */
+      if (val != null && val == parsedKey.secondaryValue) {
+        if (!linkArray[i].href) {
+          throw new Error(parsedKey.key + '[' + parsedKey.secondaryKey + ':' +
+              parsedKey.secondaryValue +
+              '] requested, but this link had no href attribute.');
+        }
+        log.debug('found hal link: ' + linkArray[i].href);
+        return { uri: linkArray[i].href };
+      }
+      /* jshint +W116 */
+    }
+    throw new Error(parsedKey.key + '[' + parsedKey.secondaryKey + ':' +
+        parsedKey.secondaryValue +
+       '] requested, but there is no such link.');
+  }
+  return null;
+}
+
+function findLinkByIndex(linkArray, parsedKey, log) {
+  if (typeof parsedKey.index !== 'undefined' && parsedKey.index !== null) {
+    // client specified an explicit array index for this link, so use it or fail
+    if (!linkArray[parsedKey.index]) {
+      throw new Error(parsedKey.key + '[' + parsedKey.index +
+          '] requested, but link array ' + parsedKey.key +
+          ' had no element at index ' + parsedKey.index);
+    }
+    if (!linkArray[parsedKey.index].href) {
+      throw new Error(parsedKey.key + '[' + parsedKey.index +
+          '] requested, but this link had no href attribute.');
+    }
+    log.debug('found hal link: ' + linkArray[parsedKey.index].href);
+    return { uri: linkArray[parsedKey.index].href };
+  }
+  return null;
+}
+
+function findLinkWithoutIndex(linkArray, parsedKey, log) {
+  // client did not specify an array index for this link, arbitrarily choose
+  // the first that has a href attribute
+  var link;
+  for (var index = 0; index < linkArray.length; index++) {
+    if (linkArray[index].href) {
+      link = linkArray[index];
+      break;
+    }
+  }
+  if (link) {
+    if (linkArray.length > 1) {
+      log.warn('Found HAL link array with more than one element for ' +
+          'key ' + parsedKey.key + ', arbitrarily choosing index ' + index +
+          ', because it was the first that had a href attribute.');
+    }
+    log.debug('found hal link: ' + link.href);
+    return { uri: link.href };
+  }
+  return null;
+}
+
+
+function findEmbedded(halResource, doc, parsedKey, log) {
+  log.debug('checking for embedded: ' + parsedKey.key +
+      (parsedKey.index ? parsedKey.index : ''));
+
+  var resourceArray = halResource.embeddedArray(parsedKey.key);
+  if (!resourceArray || resourceArray.length === 0) {
+    return null;
+  }
+  log.debug('Found an array of embedded resource for: ' + parsedKey.key);
+
+  var step =
+    findeEmbeddedByIndexOrAll(resourceArray, parsedKey, halResource, log);
+  if (!step) {
+    step = findEmbeddedSimple(resourceArray, parsedKey, log);
+  }
+  return step;
+}
+
+function findeEmbeddedByIndexOrAll(resourceArray, parsedKey, parentResource,
+    log) {
+  if (parsedKey.all) {
+    return { doc: parentResource.original()._embedded[parsedKey.key] };
+  } else if (parsedKey.index) {
+    // client specified an explicit array index, so use it or fail
+    if (!resourceArray[parsedKey.index]) {
+      throw new Error(parsedKey.key + '[' + parsedKey.index +
+          '] requested, but there is no such link. However, there is an ' +
+          'embedded resource array named ' + parsedKey.key +
+          ' but it does not have an element at index ' + parsedKey.index);
+    }
+    log.debug('Found an embedded resource for: ' + parsedKey.key + '[' +
+        parsedKey.index + ']');
+    return { doc: resourceArray[parsedKey.index].original() };
+  }
+  return null;
+}
+
+function findEmbeddedSimple(resourceArray, parsedKey, log) {
+  // client did not specify an array index, arbitrarily choose first
+  if (resourceArray.length > 1) {
+    log.warn('Found HAL embedded resource array with more than one element ' +
+        ' for key ' + parsedKey.key + ', arbitrarily choosing first element.');
+  }
+  return { doc: resourceArray[0].original() };
+}
+
+module.exports = JsonHalAdapter;
+
+},{"halfred":27}],27:[function(require,module,exports){
 var Parser = require('./lib/parser')
   , validationFlag = false;
 
@@ -30784,7 +29876,7 @@ module.exports = {
   }
 };
 
-},{"./lib/parser":28}],27:[function(require,module,exports){
+},{"./lib/parser":29}],28:[function(require,module,exports){
 'use strict';
 
 /*
@@ -30829,7 +29921,7 @@ ImmutableStack.prototype.peek = function() {
 
 module.exports = ImmutableStack;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 var Resource = require('./resource')
@@ -30951,6 +30043,11 @@ function arrayfy(key, object, fn, validation, path) {
 
 
 function parseLink(linkKey, link, validation, path) {
+  if (!isObject(link)) {
+    throw new Error('Link object is not an actual object: ' + link +
+      ' [' + typeof link + ']');
+  }
+
   // create a shallow copy of the link object
   var copy = shallowCopy(link);
 
@@ -30989,6 +30086,10 @@ function parseLink(linkKey, link, validation, path) {
 
 function isArray(o) {
   return Object.prototype.toString.call(o) === '[object Array]';
+}
+
+function isObject(o) {
+  return typeof o === 'object';
 }
 
 function identity(key, object) {
@@ -31030,7 +30131,7 @@ function pathToString(path) {
 
 module.exports = Parser;
 
-},{"./immutable_stack":27,"./resource":29}],29:[function(require,module,exports){
+},{"./immutable_stack":28,"./resource":30}],30:[function(require,module,exports){
 'use strict';
 
 function Resource(links, curies, embedded, validationIssues) {
@@ -31054,10 +30155,6 @@ Resource.prototype._initCuries = function(curies) {
   }
   this._preResolveCuries();
 };
-
-// TODO resolving of CURIEs should be a package of its own
-// TODO resolving templated CURIES should use a small uri template lib, not
-// coded here ad hoc
 
 Resource.prototype._preResolveCuries = function() {
   this._resolvedCuriesMap = {};
@@ -31163,1313 +30260,4 @@ Resource.prototype.validation = Resource.prototype.validationIssues;
 
 module.exports = Resource;
 
-},{}],30:[function(require,module,exports){
-module.exports = (function(){
-  /*
-   * Generated by PEG.js 0.7.0.
-   *
-   * http://pegjs.majda.cz/
-   */
-  
-  function quote(s) {
-    /*
-     * ECMA-262, 5th ed., 7.8.4: All characters may appear literally in a
-     * string literal except for the closing quote character, backslash,
-     * carriage return, line separator, paragraph separator, and line feed.
-     * Any character may appear in the form of an escape sequence.
-     *
-     * For portability, we also escape escape all control and non-ASCII
-     * characters. Note that "\0" and "\v" escape sequences are not used
-     * because JSHint does not like the first and IE the second.
-     */
-     return '"' + s
-      .replace(/\\/g, '\\\\')  // backslash
-      .replace(/"/g, '\\"')    // closing quote character
-      .replace(/\x08/g, '\\b') // backspace
-      .replace(/\t/g, '\\t')   // horizontal tab
-      .replace(/\n/g, '\\n')   // line feed
-      .replace(/\f/g, '\\f')   // form feed
-      .replace(/\r/g, '\\r')   // carriage return
-      .replace(/[\x00-\x07\x0B\x0E-\x1F\x80-\uFFFF]/g, escape)
-      + '"';
-  }
-  
-  var result = {
-    /*
-     * Parses the input with a generated parser. If the parsing is successfull,
-     * returns a value explicitly or implicitly specified by the grammar from
-     * which the parser was generated (see |PEG.buildParser|). If the parsing is
-     * unsuccessful, throws |PEG.parser.SyntaxError| describing the error.
-     */
-    parse: function(input, startRule) {
-      var parseFunctions = {
-        "uriTemplate": parse_uriTemplate,
-        "expression": parse_expression,
-        "op": parse_op,
-        "pathExpression": parse_pathExpression,
-        "paramList": parse_paramList,
-        "param": parse_param,
-        "cut": parse_cut,
-        "listMarker": parse_listMarker,
-        "substr": parse_substr,
-        "nonexpression": parse_nonexpression,
-        "extension": parse_extension
-      };
-      
-      if (startRule !== undefined) {
-        if (parseFunctions[startRule] === undefined) {
-          throw new Error("Invalid rule name: " + quote(startRule) + ".");
-        }
-      } else {
-        startRule = "uriTemplate";
-      }
-      
-      var pos = 0;
-      var reportFailures = 0;
-      var rightmostFailuresPos = 0;
-      var rightmostFailuresExpected = [];
-      
-      function padLeft(input, padding, length) {
-        var result = input;
-        
-        var padLength = length - input.length;
-        for (var i = 0; i < padLength; i++) {
-          result = padding + result;
-        }
-        
-        return result;
-      }
-      
-      function escape(ch) {
-        var charCode = ch.charCodeAt(0);
-        var escapeChar;
-        var length;
-        
-        if (charCode <= 0xFF) {
-          escapeChar = 'x';
-          length = 2;
-        } else {
-          escapeChar = 'u';
-          length = 4;
-        }
-        
-        return '\\' + escapeChar + padLeft(charCode.toString(16).toUpperCase(), '0', length);
-      }
-      
-      function matchFailed(failure) {
-        if (pos < rightmostFailuresPos) {
-          return;
-        }
-        
-        if (pos > rightmostFailuresPos) {
-          rightmostFailuresPos = pos;
-          rightmostFailuresExpected = [];
-        }
-        
-        rightmostFailuresExpected.push(failure);
-      }
-      
-      function parse_uriTemplate() {
-        var result0, result1;
-        var pos0;
-        
-        pos0 = pos;
-        result0 = [];
-        result1 = parse_nonexpression();
-        if (result1 === null) {
-          result1 = parse_expression();
-        }
-        while (result1 !== null) {
-          result0.push(result1);
-          result1 = parse_nonexpression();
-          if (result1 === null) {
-            result1 = parse_expression();
-          }
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, pieces) { return new Template(pieces) })(pos0, result0);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_expression() {
-        var result0, result1, result2, result3;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        if (input.charCodeAt(pos) === 123) {
-          result0 = "{";
-          pos++;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\"{\"");
-          }
-        }
-        if (result0 !== null) {
-          result1 = parse_op();
-          if (result1 !== null) {
-            result2 = parse_paramList();
-            if (result2 !== null) {
-              if (input.charCodeAt(pos) === 125) {
-                result3 = "}";
-                pos++;
-              } else {
-                result3 = null;
-                if (reportFailures === 0) {
-                  matchFailed("\"}\"");
-                }
-              }
-              if (result3 !== null) {
-                result0 = [result0, result1, result2, result3];
-              } else {
-                result0 = null;
-                pos = pos1;
-              }
-            } else {
-              result0 = null;
-              pos = pos1;
-            }
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, op, params) { return expression(op, params) })(pos0, result0[1], result0[2]);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_op() {
-        var result0;
-        
-        if (/^[\/;:.?&+#]/.test(input.charAt(pos))) {
-          result0 = input.charAt(pos);
-          pos++;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("[\\/;:.?&+#]");
-          }
-        }
-        if (result0 === null) {
-          result0 = "";
-        }
-        return result0;
-      }
-      
-      function parse_pathExpression() {
-        var result0;
-        
-        if (input.substr(pos, 2) === "{/") {
-          result0 = "{/";
-          pos += 2;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\"{/\"");
-          }
-        }
-        return result0;
-      }
-      
-      function parse_paramList() {
-        var result0, result1, result2, result3;
-        var pos0, pos1, pos2, pos3;
-        
-        pos0 = pos;
-        pos1 = pos;
-        result0 = parse_param();
-        if (result0 !== null) {
-          result1 = [];
-          pos2 = pos;
-          pos3 = pos;
-          if (input.charCodeAt(pos) === 44) {
-            result2 = ",";
-            pos++;
-          } else {
-            result2 = null;
-            if (reportFailures === 0) {
-              matchFailed("\",\"");
-            }
-          }
-          if (result2 !== null) {
-            result3 = parse_param();
-            if (result3 !== null) {
-              result2 = [result2, result3];
-            } else {
-              result2 = null;
-              pos = pos3;
-            }
-          } else {
-            result2 = null;
-            pos = pos3;
-          }
-          if (result2 !== null) {
-            result2 = (function(offset, p) { return p; })(pos2, result2[1]);
-          }
-          if (result2 === null) {
-            pos = pos2;
-          }
-          while (result2 !== null) {
-            result1.push(result2);
-            pos2 = pos;
-            pos3 = pos;
-            if (input.charCodeAt(pos) === 44) {
-              result2 = ",";
-              pos++;
-            } else {
-              result2 = null;
-              if (reportFailures === 0) {
-                matchFailed("\",\"");
-              }
-            }
-            if (result2 !== null) {
-              result3 = parse_param();
-              if (result3 !== null) {
-                result2 = [result2, result3];
-              } else {
-                result2 = null;
-                pos = pos3;
-              }
-            } else {
-              result2 = null;
-              pos = pos3;
-            }
-            if (result2 !== null) {
-              result2 = (function(offset, p) { return p; })(pos2, result2[1]);
-            }
-            if (result2 === null) {
-              pos = pos2;
-            }
-          }
-          if (result1 !== null) {
-            result0 = [result0, result1];
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, hd, rst) { rst.unshift(hd); return rst; })(pos0, result0[0], result0[1]);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_param() {
-        var result0, result1, result2;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        result0 = [];
-        if (/^[a-zA-Z0-9_.%]/.test(input.charAt(pos))) {
-          result1 = input.charAt(pos);
-          pos++;
-        } else {
-          result1 = null;
-          if (reportFailures === 0) {
-            matchFailed("[a-zA-Z0-9_.%]");
-          }
-        }
-        while (result1 !== null) {
-          result0.push(result1);
-          if (/^[a-zA-Z0-9_.%]/.test(input.charAt(pos))) {
-            result1 = input.charAt(pos);
-            pos++;
-          } else {
-            result1 = null;
-            if (reportFailures === 0) {
-              matchFailed("[a-zA-Z0-9_.%]");
-            }
-          }
-        }
-        if (result0 !== null) {
-          result1 = parse_cut();
-          if (result1 === null) {
-            result1 = parse_listMarker();
-          }
-          result1 = result1 !== null ? result1 : "";
-          if (result1 !== null) {
-            result2 = parse_extension();
-            result2 = result2 !== null ? result2 : "";
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
-            } else {
-              result0 = null;
-              pos = pos1;
-            }
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, chars, clm, e) { clm = clm || {};
-              return {
-              name: chars.join(''),
-              explode: clm.listMarker,
-              cut: clm.cut,
-              extended: e
-            } })(pos0, result0[0], result0[1], result0[2]);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_cut() {
-        var result0;
-        var pos0;
-        
-        pos0 = pos;
-        result0 = parse_substr();
-        if (result0 !== null) {
-          result0 = (function(offset, cut) { return {cut: cut}; })(pos0, result0);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_listMarker() {
-        var result0;
-        var pos0;
-        
-        pos0 = pos;
-        if (input.charCodeAt(pos) === 42) {
-          result0 = "*";
-          pos++;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\"*\"");
-          }
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, listMarker) { return {listMarker: listMarker}; })(pos0, result0);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_substr() {
-        var result0, result1, result2;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        if (input.charCodeAt(pos) === 58) {
-          result0 = ":";
-          pos++;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\":\"");
-          }
-        }
-        if (result0 !== null) {
-          if (/^[0-9]/.test(input.charAt(pos))) {
-            result2 = input.charAt(pos);
-            pos++;
-          } else {
-            result2 = null;
-            if (reportFailures === 0) {
-              matchFailed("[0-9]");
-            }
-          }
-          if (result2 !== null) {
-            result1 = [];
-            while (result2 !== null) {
-              result1.push(result2);
-              if (/^[0-9]/.test(input.charAt(pos))) {
-                result2 = input.charAt(pos);
-                pos++;
-              } else {
-                result2 = null;
-                if (reportFailures === 0) {
-                  matchFailed("[0-9]");
-                }
-              }
-            }
-          } else {
-            result1 = null;
-          }
-          if (result1 !== null) {
-            result0 = [result0, result1];
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, digits) { return parseInt(digits.join('')) })(pos0, result0[1]);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_nonexpression() {
-        var result0, result1;
-        var pos0;
-        
-        pos0 = pos;
-        if (/^[^{]/.test(input.charAt(pos))) {
-          result1 = input.charAt(pos);
-          pos++;
-        } else {
-          result1 = null;
-          if (reportFailures === 0) {
-            matchFailed("[^{]");
-          }
-        }
-        if (result1 !== null) {
-          result0 = [];
-          while (result1 !== null) {
-            result0.push(result1);
-            if (/^[^{]/.test(input.charAt(pos))) {
-              result1 = input.charAt(pos);
-              pos++;
-            } else {
-              result1 = null;
-              if (reportFailures === 0) {
-                matchFailed("[^{]");
-              }
-            }
-          }
-        } else {
-          result0 = null;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, chars) { return chars.join(''); })(pos0, result0);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      function parse_extension() {
-        var result0, result1, result2;
-        var pos0, pos1;
-        
-        pos0 = pos;
-        pos1 = pos;
-        if (input.charCodeAt(pos) === 40) {
-          result0 = "(";
-          pos++;
-        } else {
-          result0 = null;
-          if (reportFailures === 0) {
-            matchFailed("\"(\"");
-          }
-        }
-        if (result0 !== null) {
-          if (/^[^)]/.test(input.charAt(pos))) {
-            result2 = input.charAt(pos);
-            pos++;
-          } else {
-            result2 = null;
-            if (reportFailures === 0) {
-              matchFailed("[^)]");
-            }
-          }
-          if (result2 !== null) {
-            result1 = [];
-            while (result2 !== null) {
-              result1.push(result2);
-              if (/^[^)]/.test(input.charAt(pos))) {
-                result2 = input.charAt(pos);
-                pos++;
-              } else {
-                result2 = null;
-                if (reportFailures === 0) {
-                  matchFailed("[^)]");
-                }
-              }
-            }
-          } else {
-            result1 = null;
-          }
-          if (result1 !== null) {
-            if (input.charCodeAt(pos) === 41) {
-              result2 = ")";
-              pos++;
-            } else {
-              result2 = null;
-              if (reportFailures === 0) {
-                matchFailed("\")\"");
-              }
-            }
-            if (result2 !== null) {
-              result0 = [result0, result1, result2];
-            } else {
-              result0 = null;
-              pos = pos1;
-            }
-          } else {
-            result0 = null;
-            pos = pos1;
-          }
-        } else {
-          result0 = null;
-          pos = pos1;
-        }
-        if (result0 !== null) {
-          result0 = (function(offset, chars) { return chars.join('') })(pos0, result0[1]);
-        }
-        if (result0 === null) {
-          pos = pos0;
-        }
-        return result0;
-      }
-      
-      
-      function cleanupExpected(expected) {
-        expected.sort();
-        
-        var lastExpected = null;
-        var cleanExpected = [];
-        for (var i = 0; i < expected.length; i++) {
-          if (expected[i] !== lastExpected) {
-            cleanExpected.push(expected[i]);
-            lastExpected = expected[i];
-          }
-        }
-        return cleanExpected;
-      }
-      
-      function computeErrorPosition() {
-        /*
-         * The first idea was to use |String.split| to break the input up to the
-         * error position along newlines and derive the line and column from
-         * there. However IE's |split| implementation is so broken that it was
-         * enough to prevent it.
-         */
-        
-        var line = 1;
-        var column = 1;
-        var seenCR = false;
-        
-        for (var i = 0; i < Math.max(pos, rightmostFailuresPos); i++) {
-          var ch = input.charAt(i);
-          if (ch === "\n") {
-            if (!seenCR) { line++; }
-            column = 1;
-            seenCR = false;
-          } else if (ch === "\r" || ch === "\u2028" || ch === "\u2029") {
-            line++;
-            column = 1;
-            seenCR = true;
-          } else {
-            column++;
-            seenCR = false;
-          }
-        }
-        
-        return { line: line, column: column };
-      }
-      
-      
-          var cls = require('./lib/classes')
-          var Template = cls.Template
-          var expression = cls.expression
-      
-      
-      var result = parseFunctions[startRule]();
-      
-      /*
-       * The parser is now in one of the following three states:
-       *
-       * 1. The parser successfully parsed the whole input.
-       *
-       *    - |result !== null|
-       *    - |pos === input.length|
-       *    - |rightmostFailuresExpected| may or may not contain something
-       *
-       * 2. The parser successfully parsed only a part of the input.
-       *
-       *    - |result !== null|
-       *    - |pos < input.length|
-       *    - |rightmostFailuresExpected| may or may not contain something
-       *
-       * 3. The parser did not successfully parse any part of the input.
-       *
-       *   - |result === null|
-       *   - |pos === 0|
-       *   - |rightmostFailuresExpected| contains at least one failure
-       *
-       * All code following this comment (including called functions) must
-       * handle these states.
-       */
-      if (result === null || pos !== input.length) {
-        var offset = Math.max(pos, rightmostFailuresPos);
-        var found = offset < input.length ? input.charAt(offset) : null;
-        var errorPosition = computeErrorPosition();
-        
-        throw new this.SyntaxError(
-          cleanupExpected(rightmostFailuresExpected),
-          found,
-          offset,
-          errorPosition.line,
-          errorPosition.column
-        );
-      }
-      
-      return result;
-    },
-    
-    /* Returns the parser source code. */
-    toSource: function() { return this._source; }
-  };
-  
-  /* Thrown when a parser encounters a syntax error. */
-  
-  result.SyntaxError = function(expected, found, offset, line, column) {
-    function buildMessage(expected, found) {
-      var expectedHumanized, foundHumanized;
-      
-      switch (expected.length) {
-        case 0:
-          expectedHumanized = "end of input";
-          break;
-        case 1:
-          expectedHumanized = expected[0];
-          break;
-        default:
-          expectedHumanized = expected.slice(0, expected.length - 1).join(", ")
-            + " or "
-            + expected[expected.length - 1];
-      }
-      
-      foundHumanized = found ? quote(found) : "end of input";
-      
-      return "Expected " + expectedHumanized + " but " + foundHumanized + " found.";
-    }
-    
-    this.name = "SyntaxError";
-    this.expected = expected;
-    this.found = found;
-    this.message = buildMessage(expected, found);
-    this.offset = offset;
-    this.line = line;
-    this.column = column;
-  };
-  
-  result.SyntaxError.prototype = Error.prototype;
-  
-  return result;
-})();
-
-},{"./lib/classes":31}],31:[function(require,module,exports){
-// Generated by CoffeeScript 1.6.2
-(function() {
-  var FormContinuationExpression, FormStartExpression, FragmentExpression, LabelExpression, NamedExpression, PathParamExpression, PathSegmentExpression, ReservedExpression, SimpleExpression, Template, encoders, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7,
-    __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-    __hasProp = {}.hasOwnProperty,
-    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
-
-  encoders = require('./encoders');
-
-  Template = Template = (function() {
-    function Template(pieces) {
-      /*
-      :param pieces: An array of strings and expressions in the order they appear in the template.
-      */
-
-      var i,
-        _this = this;
-
-      this.expressions = [];
-      this.prefix = 'string' === typeof pieces[0] ? pieces.shift() : '';
-      i = 0;
-      pieces.forEach(function(p) {
-        switch (typeof p) {
-          case 'object':
-            return _this.expressions[i++] = p;
-          case 'string':
-            return _this.expressions[i - 1].suffix = p;
-        }
-      });
-    }
-
-    Template.prototype.expand = function(vars) {
-      return this.prefix + this.expressions.map(function(expr) {
-        return expr.expand(vars);
-      }).join('');
-    };
-
-    Template.prototype.toString = function() {
-      return this.prefix + this.expressions.join('');
-    };
-
-    Template.prototype.toJSON = function() {
-      return this.toString();
-    };
-
-    return Template;
-
-  })();
-
-  SimpleExpression = (function() {
-    var definedPairs;
-
-    SimpleExpression.prototype.first = "";
-
-    SimpleExpression.prototype.sep = ",";
-
-    SimpleExpression.prototype.named = false;
-
-    SimpleExpression.prototype.empty = "";
-
-    SimpleExpression.prototype.allow = "U";
-
-    function SimpleExpression(params) {
-      var _ref;
-
-      this.params = params;
-      this.explodeObject = __bind(this.explodeObject, this);
-      this.explodeArray = __bind(this.explodeArray, this);
-      this._expandPair = __bind(this._expandPair, this);
-      this.stringifySingle = __bind(this.stringifySingle, this);
-      this.encode = __bind(this.encode, this);
-      if ((_ref = this.params) == null) {
-        this.params = [];
-      }
-      this.suffix = '';
-    }
-
-    SimpleExpression.prototype.encode = function(string) {
-      /*
-      Encode a string value for the URI
-      */
-      return encoders[this.allow](string);
-    };
-
-    SimpleExpression.prototype.stringifySingle = function(param, value) {
-      /*
-      Encode a single value as a string
-      */
-
-      var k, type, v;
-
-      type = typeof value;
-      if (type === 'string' || type === 'boolean' || type === 'number') {
-        value = value.toString();
-        return this.encode(value.substring(0, param.cut || value.length));
-      } else if (Array.isArray(value)) {
-        if (param.cut) {
-          throw new Error("Prefixed Values do not support lists. Check " + param.name);
-        }
-        return value.map(this.encode).join(',');
-      } else {
-        if (param.cut) {
-          throw new Error("Prefixed Values do not support maps. Check " + param.name);
-        }
-        return ((function() {
-          var _results;
-
-          _results = [];
-          for (k in value) {
-            v = value[k];
-            _results.push([k, v].map(this.encode).join(','));
-          }
-          return _results;
-        }).call(this)).join(',');
-      }
-    };
-
-    SimpleExpression.prototype.expand = function(vars) {
-      var defined, expanded,
-        _this = this;
-
-      defined = definedPairs(this.params, vars);
-      expanded = defined.map(function(pair) {
-        return _this._expandPair.apply(_this, pair);
-      }).join(this.sep);
-      if (expanded) {
-        return this.first + expanded + this.suffix;
-      } else {
-        if (this.empty && defined.length) {
-          return this.empty + this.suffix;
-        } else {
-          return this.suffix;
-        }
-      }
-    };
-
-    definedPairs = function(params, vars) {
-      /*
-      Return an array of [key, value] arrays where ``key`` is a parameter name
-      from ``@params`` and ``value`` is the value from vars, when ``value`` is
-      neither undefined nor an empty collection.
-      */
-
-      var _this = this;
-
-      return params.map(function(p) {
-        return [p, vars[p.name]];
-      }).filter(function(pair) {
-        var k, v, vv;
-
-        v = pair[1];
-        switch (typeof v) {
-          case "undefined":
-            return false;
-          case "object":
-            if (Array.isArray(v)) {
-              v.length > 0;
-            }
-            for (k in v) {
-              vv = v[k];
-              if (vv) {
-                return true;
-              }
-            }
-            return false;
-          default:
-            return true;
-        }
-      });
-    };
-
-    SimpleExpression.prototype._expandPair = function(param, value) {
-      /*
-      Return the expanded string form of ``pair``.
-      
-      :param pair: A ``[param, value]`` tuple.
-      */
-
-      var name;
-
-      name = param.name;
-      if (param.explode) {
-        if (Array.isArray(value)) {
-          return this.explodeArray(param, value);
-        } else if (typeof value === 'string') {
-          return this.stringifySingle(param, value);
-        } else {
-          return this.explodeObject(value);
-        }
-      } else {
-        return this.stringifySingle(param, value);
-      }
-    };
-
-    SimpleExpression.prototype.explodeArray = function(param, array) {
-      return array.map(this.encode).join(this.sep);
-    };
-
-    SimpleExpression.prototype.explodeObject = function(object) {
-      var k, pairs, v, vv, _i, _len;
-
-      pairs = [];
-      for (k in object) {
-        v = object[k];
-        k = this.encode(k);
-        if (Array.isArray(v)) {
-          for (_i = 0, _len = v.length; _i < _len; _i++) {
-            vv = v[_i];
-            pairs.push([k, this.encode(vv)]);
-          }
-        } else {
-          pairs.push([k, this.encode(v)]);
-        }
-      }
-      return pairs.map(function(pair) {
-        return pair.join('=');
-      }).join(this.sep);
-    };
-
-    SimpleExpression.prototype.toString = function() {
-      var params;
-
-      params = this.params.map(function(p) {
-        return p.name + p.explode;
-      }).join(',');
-      return "{" + this.first + params + "}" + this.suffix;
-    };
-
-    SimpleExpression.prototype.toJSON = function() {
-      return this.toString();
-    };
-
-    return SimpleExpression;
-
-  })();
-
-  NamedExpression = (function(_super) {
-    __extends(NamedExpression, _super);
-
-    function NamedExpression() {
-      this.explodeArray = __bind(this.explodeArray, this);
-      this.stringifySingle = __bind(this.stringifySingle, this);      _ref = NamedExpression.__super__.constructor.apply(this, arguments);
-      return _ref;
-    }
-
-    /*
-    A NamedExpression uses name=value expansions in most cases
-    */
-
-
-    NamedExpression.prototype.stringifySingle = function(param, value) {
-      value = (value = NamedExpression.__super__.stringifySingle.apply(this, arguments)) ? "=" + value : this.empty;
-      return "" + param.name + value;
-    };
-
-    NamedExpression.prototype.explodeArray = function(param, array) {
-      var _this = this;
-
-      return array.map(function(v) {
-        return "" + param.name + "=" + (_this.encode(v));
-      }).join(this.sep);
-    };
-
-    return NamedExpression;
-
-  })(SimpleExpression);
-
-  ReservedExpression = (function(_super) {
-    __extends(ReservedExpression, _super);
-
-    function ReservedExpression() {
-      _ref1 = ReservedExpression.__super__.constructor.apply(this, arguments);
-      return _ref1;
-    }
-
-    ReservedExpression.prototype.encode = function(string) {
-      return encoders['U+R'](string);
-    };
-
-    ReservedExpression.prototype.toString = function() {
-      return '{+' + (ReservedExpression.__super__.toString.apply(this, arguments)).substring(1);
-    };
-
-    return ReservedExpression;
-
-  })(SimpleExpression);
-
-  FragmentExpression = (function(_super) {
-    __extends(FragmentExpression, _super);
-
-    function FragmentExpression() {
-      _ref2 = FragmentExpression.__super__.constructor.apply(this, arguments);
-      return _ref2;
-    }
-
-    FragmentExpression.prototype.first = '#';
-
-    FragmentExpression.prototype.empty = '#';
-
-    FragmentExpression.prototype.encode = function(string) {
-      return encoders['U+R'](string);
-    };
-
-    return FragmentExpression;
-
-  })(SimpleExpression);
-
-  LabelExpression = (function(_super) {
-    __extends(LabelExpression, _super);
-
-    function LabelExpression() {
-      _ref3 = LabelExpression.__super__.constructor.apply(this, arguments);
-      return _ref3;
-    }
-
-    LabelExpression.prototype.first = '.';
-
-    LabelExpression.prototype.sep = '.';
-
-    LabelExpression.prototype.empty = '.';
-
-    return LabelExpression;
-
-  })(SimpleExpression);
-
-  PathSegmentExpression = (function(_super) {
-    __extends(PathSegmentExpression, _super);
-
-    function PathSegmentExpression() {
-      _ref4 = PathSegmentExpression.__super__.constructor.apply(this, arguments);
-      return _ref4;
-    }
-
-    PathSegmentExpression.prototype.first = '/';
-
-    PathSegmentExpression.prototype.sep = '/';
-
-    return PathSegmentExpression;
-
-  })(SimpleExpression);
-
-  PathParamExpression = (function(_super) {
-    __extends(PathParamExpression, _super);
-
-    function PathParamExpression() {
-      _ref5 = PathParamExpression.__super__.constructor.apply(this, arguments);
-      return _ref5;
-    }
-
-    PathParamExpression.prototype.first = ';';
-
-    PathParamExpression.prototype.sep = ';';
-
-    return PathParamExpression;
-
-  })(NamedExpression);
-
-  FormStartExpression = (function(_super) {
-    __extends(FormStartExpression, _super);
-
-    function FormStartExpression() {
-      _ref6 = FormStartExpression.__super__.constructor.apply(this, arguments);
-      return _ref6;
-    }
-
-    FormStartExpression.prototype.first = '?';
-
-    FormStartExpression.prototype.sep = '&';
-
-    FormStartExpression.prototype.empty = '=';
-
-    return FormStartExpression;
-
-  })(NamedExpression);
-
-  FormContinuationExpression = (function(_super) {
-    __extends(FormContinuationExpression, _super);
-
-    function FormContinuationExpression() {
-      _ref7 = FormContinuationExpression.__super__.constructor.apply(this, arguments);
-      return _ref7;
-    }
-
-    FormContinuationExpression.prototype.first = '&';
-
-    return FormContinuationExpression;
-
-  })(FormStartExpression);
-
-  module.exports = {
-    Template: Template,
-    SimpleExpression: SimpleExpression,
-    NamedExpression: NamedExpression,
-    ReservedExpression: ReservedExpression,
-    FragmentExpression: FragmentExpression,
-    LabelExpression: LabelExpression,
-    PathSegmentExpression: PathSegmentExpression,
-    PathParamExpression: PathParamExpression,
-    FormStartExpression: FormStartExpression,
-    FormContinuationExpression: FormContinuationExpression,
-    expression: function(op, params) {
-      var cls;
-
-      cls = (function() {
-        switch (op) {
-          case '':
-            return SimpleExpression;
-          case '+':
-            return ReservedExpression;
-          case '#':
-            return FragmentExpression;
-          case '.':
-            return LabelExpression;
-          case '/':
-            return PathSegmentExpression;
-          case ';':
-            return PathParamExpression;
-          case '?':
-            return FormStartExpression;
-          case '&':
-            return FormContinuationExpression;
-        }
-      })();
-      return new cls(params);
-    }
-  };
-
-}).call(this);
-
-},{"./encoders":32}],32:[function(require,module,exports){
-// Generated by CoffeeScript 1.6.2
-(function() {
-  var pctEncode;
-
-  pctEncode = require('pct-encode');
-
-  exports["U"] = pctEncode(/[^\w~.-]/g);
-
-  exports["U+R"] = pctEncode(/[^\w.~:\/\?#\[\]@!\$&'()*+,;=-]/g);
-
-}).call(this);
-
-},{"pct-encode":33}],33:[function(require,module,exports){
-module.exports = function pctEncode(regexp) {
-  regexp = regexp || /\W/g;
-  return function encode(string) {
-    string = String(string);
-    return string.replace(regexp, function (m) {
-      var c = m[0].charCodeAt(0)
-        , encoded = [];
-      if (c < 128) {
-        encoded.push(c);
-      } else if ((128 <= c && c < 2048)) {
-        encoded.push((c >> 6) | 192);
-        encoded.push((c & 63) | 128);
-      } else {
-        encoded.push((c >> 12) | 224);
-        encoded.push(((c >> 6) & 63) | 128);
-        encoded.push((c & 63) | 128);
-      }
-      return encoded.map(function (c) {
-        return '%' + c.toString(16).toUpperCase();
-      }).join('');
-    })
-  }
-}
-
-},{}],34:[function(require,module,exports){
-'use strict';
-
-var minilog = require('minilog')
-  , mediaTypes = require('./lib/media_types')
-  , Builder = require('./lib/builder');
-
-// activate this line to enable logging
-// require('minilog').enable();
-
-module.exports = {
-  _Builder: Builder,
-  json: {
-    from: function(uri) {
-      return {
-        newRequest: function() {
-          return new Builder(mediaTypes.JSON, uri);
-        }
-      };
-    }
-  },
-  jsonHal: {
-    from: function(uri) {
-      return {
-        newRequest: function() {
-          return new Builder(mediaTypes.JSON_HAL, uri);
-        }
-      };
-    }
-  }
-};
-
-},{"./lib/builder":18,"./lib/media_types":22,"minilog":13}],35:[function(require,module,exports){
-/* global angular */
-'use strict';
-
-var traverson = require('traverson');
-
-var ng;
-if (typeof angular !== 'undefined') {
-  // angular is defined globally, use this
-  ng = angular;
-} else {
-  // angular is not defined globally, try to require it
-  ng = require('angular');
-  if (typeof ng.module !== 'function') {
-    throw new Error('angular has either to be provided globally or made ' +
-        'available as a shim for browserify. (Also, if the angular module on ' +
-        'npm would actually be a proper CommonJS module, this error ' +
-        'wouldn\'t be a thing.)');
-  }
-}
-
-var traversonAngular = ng.module('traverson', []);
-
-traversonAngular.factory('traverson', function traversonFactory($q) {
-  var Builder = traverson._Builder;
-  var originalMethods = {
-    get: Builder.prototype.get,
-    getResource: Builder.prototype.getResource,
-    getUri: Builder.prototype.getUri,
-    post: Builder.prototype.post,
-    put: Builder.prototype.put,
-    patch: Builder.prototype.patch,
-    del: Builder.prototype.del,
-  };
-
-  function promisify(that, originalMethod, callback) {
-    var deferred = $q.defer();
-    originalMethod.call(that, function(err, result, uri) {
-      if (err) {
-        err.result = result;
-        err.uri = uri;
-        deferred.reject(err);
-      } else {
-        deferred.resolve(result);
-      }
-    });
-    return deferred.promise;
-  }
-
-  Builder.prototype.get = function(callback) {
-    return promisify(this, originalMethods.get, callback);
-  };
-
-  Builder.prototype.getResource = function(callback) {
-    return promisify(this, originalMethods.getResource, callback);
-  };
-
-  Builder.prototype.getUri = function(callback) {
-    return promisify(this, originalMethods.getUri, callback);
-  };
-
-  Builder.prototype.post = function(callback) {
-    return promisify(this, originalMethods.post, callback);
-  };
-
-  Builder.prototype.put = function(callback) {
-    return promisify(this, originalMethods.put, callback);
-  };
-
-  Builder.prototype.patch = function(callback) {
-    return promisify(this, originalMethods.patch, callback);
-  };
-
-  Builder.prototype.del = function(callback) {
-    return promisify(this, originalMethods.del, callback);
-  };
-
-  return traverson;
-});
-
-module.exports = traversonAngular;
-
-},{"angular":5,"traverson":34}]},{},[3]);
+},{}]},{},[3]);

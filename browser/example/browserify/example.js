@@ -21,6 +21,11 @@ app.controller('generalSetup', function($scope) {
 app.service('apiService', function(traverson) {
 
   var jsonApi = traverson.json.from(rootUri);
+
+  // Requiring and registering the traverson-hal plug-in is fully optional,
+  // you only need that when you want HAL support.
+  var JsonHalAdapter = require('traverson-hal');
+  traverson.registerMediaType(JsonHalAdapter.mediaType, JsonHalAdapter);
   var jsonHalApi = traverson.jsonHal.from(rootUri);
 
   this.plainVanilla = function() {

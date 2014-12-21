@@ -12,7 +12,8 @@
   "dependencies": {
     "angular": "^1.3.4",
     "angular-sanitize": "^1.3.4",
-    "traverson-angular": "^0.12.0"
+    "traverson-angular": "^1.0.0",
+    "traverson-hal": "^1.0.0"
   },
   "browser": {
     "angular": "./angular/angular-common-js.js"
