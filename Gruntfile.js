@@ -16,17 +16,12 @@ module.exports = function(grunt) {
 
     jshint: {
       files: [
-        '**/*.js',
-        'Gruntfile.js',
+        '*.js',
         '.jshintrc',
-        '!node_modules/**/*',
-        '!browser/dist/**/*',
-        '!browser/example/assets/**/*',
-        '!browser/example/browserify/bundle.js',
-        '!browser/example/browserify/angular/**/*',
-        '!browser/example/browserify/node_modules/**/*',
-        '!browser/lib/**/*',
-        '!browser/test/browserified_tests.js',
+        'bin/*.js',
+        'test/**/*.js',
+        'browser/example/*.js',
+        'browser/example/browserify/example.js',
       ],
       options: {
         jshintrc: '.jshintrc'
