@@ -32,9 +32,11 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
     del: Builder.prototype.del,
   };
 
-  function promisify(that, originalMethod, callback) {
+  function promisify(that, originalMethod, argsArray) {
     var deferred = $q.defer();
-    originalMethod.call(that, function(err, result, uri) {
+    var argsArray = argsArray || [];
+
+    var callback = function(err, result, uri) {
       if (err) {
         err.result = result;
         err.uri = uri;
@@ -42,36 +44,40 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
       } else {
         deferred.resolve(result);
       }
-    });
+    };
+
+    argsArray.push(callback);
+
+    originalMethod.apply(that, argsArray);
     return deferred.promise;
   }
 
-  Builder.prototype.get = function(callback) {
-    return promisify(this, originalMethods.get, callback);
+  Builder.prototype.get = function() {
+    return promisify(this, originalMethods.get);
   };
 
-  Builder.prototype.getResource = function(callback) {
-    return promisify(this, originalMethods.getResource, callback);
+  Builder.prototype.getResource = function() {
+    return promisify(this, originalMethods.getResource);
   };
 
-  Builder.prototype.getUri = function(callback) {
-    return promisify(this, originalMethods.getUri, callback);
+  Builder.prototype.getUri = function() {
+    return promisify(this, originalMethods.getUri);
   };
 
-  Builder.prototype.post = function(callback) {
-    return promisify(this, originalMethods.post, callback);
+  Builder.prototype.post = function(body) {
+    return promisify(this, originalMethods.post, [body]);
   };
 
-  Builder.prototype.put = function(callback) {
-    return promisify(this, originalMethods.put, callback);
+  Builder.prototype.put = function(body) {
+    return promisify(this, originalMethods.put, [body]);
   };
 
-  Builder.prototype.patch = function(callback) {
-    return promisify(this, originalMethods.patch, callback);
+  Builder.prototype.patch = function(body) {
+    return promisify(this, originalMethods.patch, [body]);
   };
 
-  Builder.prototype.del = function(callback) {
-    return promisify(this, originalMethods.del, callback);
+  Builder.prototype.del = function() {
+    return promisify(this, originalMethods.del);
   };
 
   return traverson;
