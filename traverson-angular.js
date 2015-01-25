@@ -34,7 +34,8 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
 
   function promisify(that, originalMethod, argsArray) {
     var deferred = $q.defer();
-    var argsArray = argsArray || [];
+
+    argsArray = argsArray || [];
 
     var callback = function(err, result, uri) {
       if (err) {
