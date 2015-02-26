@@ -38,11 +38,11 @@
       .getResource();
     };
 
-    // this.post = function() {
-    //   return api
-    //   .follow('post_link')
-    //   .post({ payload: 'this is the payload' });
-    // };
+    this.post = function() {
+      return api
+      .follow('post_link')
+      .post({ payload: 'this is the payload' });
+    };
   });
 
   app.controller('plainVanillaController', function($scope, apiService) {
@@ -104,24 +104,24 @@
       '});';
   });
 
-  // app.controller('postController', function($scope, apiService) {
-  //   $scope.start = function() {
-  //     $scope.response = '... talking to server, please stand by ...';
-  //     apiService.post().then(function(resource) {
-  //        $scope.response = JSON.stringify(resource, null, 2);
-  //     }, function(err) {
-  //        $scope.response = err.message || JSON.stringify(err);
-  //     });
-  //   };
-  //
-  //   $scope.code =
-  //     'api<br>' +
-  //     '.json()<br>' +
-  //     '.follow(\'post_link\')<br>' +
-  //     '.post({ payload: \'this is the payload\' });<br>' +
-  //     '.then(function(resource) {<br>' +
-  //     '  // do something with the resource...<br>' +
-  //     '});';
-  // });
+  app.controller('postController', function($scope, apiService) {
+    $scope.start = function() {
+      $scope.response = '... talking to server, please stand by ...';
+      apiService.post().then(function(resource) {
+         $scope.response = JSON.stringify(resource, null, 2);
+      }, function(err) {
+         $scope.response = err.message || JSON.stringify(err);
+      });
+    };
+
+    $scope.code =
+      'api<br>' +
+      '.json()<br>' +
+      '.follow(\'post_link\')<br>' +
+      '.post({ payload: \'this is the payload\' });<br>' +
+      '.then(function(resource) {<br>' +
+      '  // do something with the resource...<br>' +
+      '});';
+  });
 
 })();

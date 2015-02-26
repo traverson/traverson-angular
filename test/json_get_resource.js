@@ -1,11 +1,6 @@
 /* global angular */
 'use strict';
 
-var testModule = angular.module('testModule', ['traverson'])
-  , injector = angular.injector(['ng', 'testModule'])
-  , traversonAngular = injector.get('traverson')
-  ;
-
 var chai = require('chai')
   , sinon = require('sinon')
   , sinonChai = require('sinon-chai')
@@ -13,14 +8,14 @@ var chai = require('chai')
   , waitFor = require('poll-forever')
   , assert = chai.assert
   , expect = chai.expect
-  ;
+  , traversonAngular = require('./angular_test_helper');
 
 chai.use(sinonChai);
 
 describe('traverson-angular', function() {
 
   var rootUri = 'http://api.io';
-  var api = traversonAngular.from(rootUri);
+  var api = traversonAngular.from(rootUri).json();
   var get;
   var successCallback;
   var errorCallback;
@@ -45,13 +40,21 @@ describe('traverson-angular', function() {
     });
 
     it('should access the root URI', function() {
-      api.json().follow().getResource().then(successCallback, errorCallback);
+      api
+      .newRequest()
+      .follow()
+      .getResource()
+      .then(successCallback, errorCallback);
       expect(get).to.have.been.calledWith(rootUri, sinon.match.func);
     });
 
     it('should call successCallback with the root doc', function(done) {
       get.callsArgWithAsync(1, null, rootResponse);
-      api.json().follow().getResource().then(successCallback, errorCallback);
+      api
+      .newRequest()
+      .follow()
+      .getResource()
+      .then(successCallback, errorCallback);
       waitFor(
         function() { return successCallback.called; },
         function() {
@@ -65,7 +68,10 @@ describe('traverson-angular', function() {
     it('should call errorCallback with err', function(done) {
       var err = new Error('test error');
       get.callsArgWithAsync(1, err);
-      api.json().follow().getResource().then(successCallback, errorCallback);
+      api
+      .follow()
+      .getResource()
+      .then(successCallback, errorCallback);
       waitFor(
         function() { return errorCallback.called; },
         function() {
@@ -82,7 +88,7 @@ describe('traverson-angular', function() {
       get.withArgs(rootUri + '/link/to/thing',
           sinon.match.func).callsArgWithAsync(1, null, result);
       api
-      .json()
+      .newRequest()
       .follow('link')
       .getResource()
       .then(successCallback, errorCallback);
@@ -102,7 +108,7 @@ describe('traverson-angular', function() {
       get.withArgs(rootUri + '/link/to/thing',
           sinon.match.func).callsArgWithAsync(1, null, result);
       api
-      .json()
+      .newRequest()
       .follow(['link'])
       .getResource()
       .then(successCallback, errorCallback);
@@ -121,7 +127,7 @@ describe('traverson-angular', function() {
       get.withArgs(rootUri, sinon.match.func).callsArgWithAsync(
           1, null, rootResponse);
       api
-      .json()
+      .newRequest()
       .follow('non-existing-link')
       .getResource()
       .then(successCallback, errorCallback);
@@ -146,7 +152,7 @@ describe('traverson-angular', function() {
       get.withArgs(rootUri + '/first', sinon.match.func).
           callsArgWithAsync(1, err);
       api
-      .json()
+      .newRequest()
       .follow('firstLink')
       .getResource()
       .then(successCallback, errorCallback);

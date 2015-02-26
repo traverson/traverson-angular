@@ -29,7 +29,7 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
     post: Builder.prototype.post,
     put: Builder.prototype.put,
     patch: Builder.prototype.patch,
-    del: Builder.prototype.del,
+    delete: Builder.prototype.delete,
   };
 
   function promisify(that, originalMethod, argsArray) {
@@ -77,8 +77,8 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
     return promisify(this, originalMethods.patch, [body]);
   };
 
-  Builder.prototype.del = function() {
-    return promisify(this, originalMethods.del);
+  Builder.prototype.delete = Builder.prototype.del = function() {
+    return promisify(this, originalMethods.delete);
   };
 
   return traverson;
