@@ -14,38 +14,44 @@ var rootUri = '/';
 app.controller('generalSetup', function($scope) {
   $scope.code =
     'var rootUri = \'' + rootUri + '\';<br>' +
-    'var jsonApi = traverson.<i>json</i>.from(rootUri);<br>' +
-    'var jsonHalApi = traverson.<i>jsonHal</i>.from(rootUri);<br>';
+    'var api = traverson.from(rootUri);<br><br>' +
+
+    '// Requiring and registering the traverson-hal plug-in is fully ' +
+    'optional,<br>' +
+    '// you only need that when you want HAL support.<br>' +
+    'var JsonHalAdapter = require(\'traverson-hal\');<br>' +
+    'traverson.registerMediaType(JsonHalAdapter.mediaType, ' +
+    'JsonHalAdapter);<br>';
 });
 
 app.service('apiService', function(traverson) {
 
-  var jsonApi = traverson.json.from(rootUri);
+  var api = traverson.from(rootUri);
 
   // Requiring and registering the traverson-hal plug-in is fully optional,
   // you only need that when you want HAL support.
   var JsonHalAdapter = require('traverson-hal');
   traverson.registerMediaType(JsonHalAdapter.mediaType, JsonHalAdapter);
-  var jsonHalApi = traverson.jsonHal.from(rootUri);
 
   this.plainVanilla = function() {
-    return jsonApi.newRequest()
+    return api
+    .json()
     .withRequestOptions({ headers: { 'accept': 'application/json' } })
     .follow('second', 'doc')
     .getResource();
   };
 
   this.jsonPath = function() {
-    return jsonApi
-    .newRequest()
+    return api
+    .json()
     .withRequestOptions({ headers: { 'accept': 'application/json' } })
     .follow('$.jsonpath.nested.key')
     .getResource();
   };
 
   this.uriTemplate = function() {
-    return jsonApi
-    .newRequest()
+    return api
+    .json()
     .withRequestOptions({ headers: { 'accept': 'application/json' } })
     .follow('uri_template')
     .withTemplateParameters({ param: 'foobar', id: 13 })
@@ -53,8 +59,8 @@ app.service('apiService', function(traverson) {
   };
 
   this.jsonHal = function() {
-    return jsonHalApi
-    .newRequest()
+    return api
+    .jsonHal()
     .withRequestOptions({ headers: { 'accept': 'application/hal+json' } })
     .follow('first', 'second', 'inside_second')
     .getResource();
@@ -73,7 +79,8 @@ app.controller('plainVanillaController', function($scope, apiService) {
   };
 
   $scope.code =
-    'jsonApi.newRequest()<br>' +
+    'api<br>' +
+    '.json()<br>' +
     '.withRequestOptions({<br>' +
     '  headers: { \'accept\': \'application/json\' }<br>' +
     '})<br>' +
@@ -95,7 +102,8 @@ app.controller('jsonPathController', function($scope, apiService) {
   };
 
   $scope.code =
-    'jsonApi.newRequest()<br>' +
+    'api<br>' +
+    '.json()<br>' +
     '.withRequestOptions({<br>' +
     '  headers: { \'accept\': \'application/json\' }<br>' +
     '})<br>' +
@@ -117,7 +125,8 @@ app.controller('uriTemplateController', function($scope, apiService) {
   };
 
   $scope.code =
-    'jsonApi.newRequest()<br>' +
+    'api<br>' +
+    '.json()<br>' +
     '.withRequestOptions({<br>' +
     '  headers: { \'accept\': \'application/json\' }<br>' +
     '})<br>' +
@@ -132,6 +141,7 @@ app.controller('uriTemplateController', function($scope, apiService) {
 app.controller('jsonHalController', function($scope, apiService) {
   $scope.start = function() {
     $scope.response = '... talking to server, please stand by ...';
+    // traverson-hal needs to be registered, see above.
     apiService.jsonHal().then(function(resource) {
        $scope.response = JSON.stringify(resource, null, 2);
     }, function(err) {
@@ -140,7 +150,9 @@ app.controller('jsonHalController', function($scope, apiService) {
   };
 
   $scope.code =
-    'jsonHalApi.newRequest()<br>' +
+    '// traverson-hal needs to be registered, see above.<br>' +
+    'api<br>' +
+    '.jsonHal()<br>' +
     '.withRequestOptions({<br>' +
     '  headers: { \'accept\': \'application/hal+json\' }<br>' +
     '})<br>' +

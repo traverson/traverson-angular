@@ -111,9 +111,10 @@ You should refer to [Traverson's docs](https://github.com/basti1302/traverson/bl
 
 So this code, which uses Traverson directly:
 ```
-var api = traverson.json.from('http://api.io')
+var api = traverson.from('http://api.io').json();
 
-api.newRequest()
+api
+.newRequest()
 .follow('link_to', 'resource')
 .getResource(function(error, document) {
   if (error) {
@@ -126,9 +127,10 @@ api.newRequest()
 ```
 becomes this with traverson-angular:
 ```
-var api = traverson.json.from('http://api.io')
+var api = traverson.from('http://api.io')
 
-api.newRequest()
+api
+.newRequest()
 .follow('link_to', 'resource')
 .getResource().then(function(document) {
   console.log('We have followed the path and reached our destination.')

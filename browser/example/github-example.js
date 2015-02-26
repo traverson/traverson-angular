@@ -11,13 +11,14 @@
   app.controller('generalSetup', function($scope) {
     $scope.code =
       'var rootUri = \'' + rootUri + '\';<br>' +
-      'var api = traverson.json.from(rootUri);<br>';
+      'var api = traverson.from(rootUri);<br>';
   });
 
   app.service('apiService', function(traverson) {
-    var api = traverson.json.from(rootUri);
+    var api = traverson.from(rootUri);
     this.commitComment = function() {
-      return api.newRequest()
+      return api
+      .json()
       .follow('repository_url', 'commits_url', 'comments_url')
       .withTemplateParameters({
         owner: 'basti1302',
@@ -39,7 +40,8 @@
     };
 
     $scope.code =
-      'api.newRequest()<br>' +
+      'api<br/>' +
+      '.json()<br>' +
       '.follow(\'repository_url\', \'commits_url\', \'comments_url\')<br>' +
       '.withTemplateParameters({<br>' +
       '&nbsp;&nbsp;owner: \'basti1302\',<br>' +
