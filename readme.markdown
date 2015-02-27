@@ -44,11 +44,11 @@ You can grab a download from the [latest release](https://github.com/basti1302/t
 Usage
 -----
 
-```
+```javascript
 angular.module('my-app', ['traverson']);
 ```
 
-```
+```javascript
 angular.module('my-app').service('apiService', function(traverson) {
   ...
 });
@@ -65,7 +65,7 @@ Using npm and Browserify
 If you are using npm and [Browserify](http://browserify.org/) and writing your [AngularJS app as CommonJS modules](https://blog.codecentric.de/en/2014/08/angularjs-browserify/), instead of downloading a release, you can install it with `npm install traverson-angular -S`.
 
 This is how your code using traverson-angular would look like:
-```
+```javascript
 var angular = require('angular');
 var traverson = require('traverson-angular');
 var app = angular.module('my-app', [traverson.name]);
@@ -82,7 +82,7 @@ See [here](https://github.com/basti1302/traverson-angular/tree/master/browser/ex
 
 To `require` angular-core like this, you need a shim in your package.json, like this:
 
-```
+```javascript
 {
   ...
   "dependencies": {
@@ -97,7 +97,7 @@ To `require` angular-core like this, you need a shim in your package.json, like 
 ```
 
 `angular-common-js.js:`
-```
+```javascript
 require('./angular.js');
 module.exports = angular;
 ```
@@ -110,10 +110,10 @@ API
 You should refer to [Traverson's docs](https://github.com/basti1302/traverson/blob/master/readme.markdown) for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
 
 So this code, which uses Traverson directly:
-```
-var api = traverson.from('http://api.io').json();
-
-api
+```javascript
+traverson
+.from('http://api.example.com')
+.json()
 .newRequest()
 .follow('link_to', 'resource')
 .getResource(function(error, document) {
@@ -127,9 +127,8 @@ api
 ```
 becomes this with traverson-angular:
 ```
-var api = traverson.from('http://api.io')
-
-api
+traverson
+.from('http://api.example.com')
 .newRequest()
 .follow('link_to', 'resource')
 .getResource().then(function(document) {
@@ -142,15 +141,15 @@ api
 
 The only difference is `.getResource(function(error, document) {` => `.getResource().then(function(document) {`.
 
-The following methods return promises:
+The following action methods of the Traverson request builder return promises when used via traverson-angular:
 
-* `get`
-* `getResource`
-* `getUri`
-* `post`
-* `put`
-* `patch`
-* `del`
+* `get()`
+* `getResource()`
+* `getUri()`
+* `post(payload)`
+* `put(payload)`
+* `patch(payload)`
+* `delete`
 
 Release Notes
 -------------
