@@ -4,11 +4,30 @@
   "description": "AngularJS adapter for Traverson",
   "repository": "https://github.com/basti1302/traverson-angular.git",
   "main": "traverson-angular.js",
-  "author": "Bastian Krol <bastian.krol@web.de>",
+  "author": {
+    "name": "Bastian Krol",
+    "email" : "bastian.krol@web.de"
+  },
+  "contributors": [
+    {
+      "name": "Michael Heuberger",
+      "email": "michael.heuberger@binarykitchen.com"
+    }
+  ],
   "license": "MIT",
   "scripts": {
     "test": "grunt"
   },
+  "keywords": [
+    "JSON",
+    "REST",
+    "API",
+    "HATEOAS",
+    "hypertext",
+    "hypermedia",
+    "HAL",
+    "AngularJS"
+  ],
   "dependencies": {
     "traverson": "^1.0.0"
   },
