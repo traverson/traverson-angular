@@ -1,6 +1,6 @@
 {
   "name": "traverson-angular",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AngularJS adapter for Traverson",
   "repository": "https://github.com/basti1302/traverson-angular.git",
   "main": "traverson-angular.js",
