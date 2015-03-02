@@ -20,7 +20,7 @@ if (typeof angular !== 'undefined') {
 
 var traversonAngular = ng.module('traverson', []);
 
-traversonAngular.factory('traverson', function traversonFactory($q) {
+traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
   var Builder = traverson._Builder;
   var originalMethods = {
     get: Builder.prototype.get,
@@ -82,6 +82,6 @@ traversonAngular.factory('traverson', function traversonFactory($q) {
   };
 
   return traverson;
-});
+}]);
 
 module.exports = traversonAngular;
