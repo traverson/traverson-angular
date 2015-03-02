@@ -157,7 +157,7 @@ Release Notes
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
 * 1.0.1 2015-03-02:
-    * Use minification-proof array notation (#5, #6) (thanks to  jamiegaines)
+    * Use minification-proof array notation (#5, #6) (thanks to @jamiegaines)
 * 1.0.0 2015-02-27:
     * Fixed humongous bug that only allowed GET requests but thwarted POST, PUT, PATCH and DELETE requests (#2 and #4) (thanks to @binarykitchen).
     * Traverson 1.0.0 contains a lot of changes, even some breaking changes regarding HAL. See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes).
