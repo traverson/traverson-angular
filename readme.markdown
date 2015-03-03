@@ -110,38 +110,43 @@ API
 You should refer to [Traverson's docs](https://github.com/basti1302/traverson/blob/master/readme.markdown) for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
 
 So this code, which uses Traverson directly:
-```javascript
+<pre lang="javascript">
 traverson
 .from('http://api.example.com')
-.json()
 .newRequest()
 .follow('link_to', 'resource')
-.getResource(function(error, document) {
+<b>.getResource(function(error, document) {
   if (error) {
     console.error('No luck :-)')
   } else {
     console.log('We have followed the path and reached our destination.')
     console.log(JSON.stringify(document))
   }
-});
-```
+});</b>
+</pre>
 becomes this with traverson-angular:
-```javascript
+<pre lang="javascript">
 traverson
 .from('http://api.example.com')
 .newRequest()
 .follow('link_to', 'resource')
-.getResource().then(function(document) {
+<b>.getResource()
+.result
+.then(function(document) {
   console.log('We have followed the path and reached our destination.')
   console.log(JSON.stringify(document))
 }, function(err) {
   console.error('No luck');
-});
-```
+});</b>
+</pre>
 
-The only difference is `.getResource(function(error, document) {` => `.getResource().then(function(document) {`.
+The only difference is `.getResource(function(error, document) {` => `.getResource().result.then(function(document) {`.
 
-The following action methods of the Traverson request builder return promises when used via traverson-angular:
+Actually, the object returned by `getResource` has two properties:
+* `result`: the promise representing the link traversal and
+* `abort`: a function that can be used to abort the link traversal.
+
+The following action methods of the Traverson request builder return such an object (`{ result, abort }`) when used via traverson-angular:
 
 * `get()`
 * `getResource()`
@@ -151,11 +156,50 @@ The following action methods of the Traverson request builder return promises wh
 * `patch(payload)`
 * `delete`
 
+### Aborting the Link Traversal
+
+As mentioned above, the object returned by the action methods returns an object which also has an `abort()` function.
+
+So while with plain vanilla Traverson (not traverson-angular) you would abort a link traversal process like this
+
+<pre lang="javascript">
+var traversal =
+traverson
+.from('http://api.example.com')
+.newRequest()
+.follow('link_to', 'resource')
+.getResource(...);
+
+// abort the link traversal
+<b>traversal.abort();</b>
+</pre>
+
+...this is how it is done with traverson-angular:
+
+<pre lang="javascript">
+var traversal =
+traverson
+.from('http://api.example.com')
+.newRequest()
+.follow('link_to', 'resource')
+.getResource();
+
+// register callbacks
+traversal.result.then(successCallback, errorCallback);
+
+// abort the link traversal
+<b>traversal.abort()</b>
+</pre>
+
+
 Release Notes
 -------------
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 1.1.0 2015-03-??:
+    * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
+    * The new feature to abort a link traversal process made it necessary to change the API: The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` still works for now, but is deprecated and will be removed in version 2.0.0.
 * 1.0.1 2015-03-02:
     * Use minification-proof array notation (#5, #6) (thanks to @jamiegaines)
 * 1.0.0 2015-02-27:

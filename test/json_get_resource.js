@@ -14,7 +14,7 @@ chai.use(sinonChai);
 
 describe('traverson-angular', function() {
 
-  var rootUri = 'http://api.io';
+  var rootUri = 'http://api.example.org';
   var api = traversonAngular.from(rootUri).json();
   var get;
   var successCallback;
@@ -44,6 +44,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow()
       .getResource()
+      .result
       .then(successCallback, errorCallback);
       expect(get).to.have.been.calledWith(rootUri, {}, sinon.match.func);
     });
@@ -55,6 +56,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow()
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -74,6 +76,7 @@ describe('traverson-angular', function() {
       api
       .follow()
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -98,6 +101,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow('link')
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -122,6 +126,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow(['link'])
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -144,6 +149,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow('non-existing-link')
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -175,6 +181,7 @@ describe('traverson-angular', function() {
       .newRequest()
       .follow('firstLink')
       .getResource()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(

@@ -49,8 +49,25 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
 
     argsArray.push(callback);
 
-    originalMethod.apply(that, argsArray);
-    return deferred.promise;
+    var traversal = originalMethod.apply(that, argsArray);
+
+    // TODO What we actually want is
+    // return {
+    //   result: deferred.promise,
+    //   abort: traversal.abort;
+    // };
+    //
+    // - that is, return an object that only has two properties
+    // (result: the promise, abort: the function to abort the traversal) but
+    // that would break clients, which rely on the returned value being the
+    // promise. Have to wait until next breaking relase (2.0.0) to change that.
+    // For now, we return the promise directly, but also tack the properties
+    // result (again, the promise, attached to itself) and abort (the function
+    // to abort the traversal) to it.
+    var returnValue = deferred.promise;
+    returnValue.result = deferred.promise;
+    returnValue.abort = traversal.abort;
+    return returnValue;
   }
 
   Builder.prototype.get = function() {
