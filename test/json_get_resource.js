@@ -45,16 +45,18 @@ describe('traverson-angular', function() {
       .follow()
       .getResource()
       .then(successCallback, errorCallback);
-      expect(get).to.have.been.calledWith(rootUri, sinon.match.func);
+      expect(get).to.have.been.calledWith(rootUri, {}, sinon.match.func);
     });
 
     it('should call successCallback with the root doc', function(done) {
-      get.callsArgWithAsync(1, null, rootResponse);
+      get.callsArgWithAsync(2, null, rootResponse);
+
       api
       .newRequest()
       .follow()
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return successCallback.called; },
         function() {
@@ -67,11 +69,13 @@ describe('traverson-angular', function() {
 
     it('should call errorCallback with err', function(done) {
       var err = new Error('test error');
-      get.callsArgWithAsync(1, err);
+      get.callsArgWithAsync(2, err);
+
       api
       .follow()
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return errorCallback.called; },
         function() {
@@ -83,15 +87,19 @@ describe('traverson-angular', function() {
     });
 
     it('should follow a single element path', function(done) {
-      get.withArgs(rootUri, sinon.match.func).callsArgWithAsync(
-          1, null, rootResponse);
-      get.withArgs(rootUri + '/link/to/thing',
-          sinon.match.func).callsArgWithAsync(1, null, result);
+      get
+      .withArgs(rootUri, {}, sinon.match.func)
+      .callsArgWithAsync(2, null, rootResponse);
+      get
+      .withArgs(rootUri + '/link/to/thing', {}, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
+
       api
       .newRequest()
       .follow('link')
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return successCallback.called; },
         function() {
@@ -103,15 +111,19 @@ describe('traverson-angular', function() {
     });
 
     it('should follow a single element path as array', function(done) {
-      get.withArgs(rootUri, sinon.match.func).callsArgWithAsync(
-          1, null, rootResponse);
-      get.withArgs(rootUri + '/link/to/thing',
-          sinon.match.func).callsArgWithAsync(1, null, result);
+      get
+      .withArgs(rootUri, {}, sinon.match.func)
+      .callsArgWithAsync(2, null, rootResponse);
+      get
+      .withArgs(rootUri + '/link/to/thing', {}, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
+
       api
       .newRequest()
       .follow(['link'])
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return successCallback.called; },
         function() {
@@ -124,13 +136,16 @@ describe('traverson-angular', function() {
 
     it('should call errorCallback with err if link is not found',
         function(done) {
-      get.withArgs(rootUri, sinon.match.func).callsArgWithAsync(
-          1, null, rootResponse);
+      get
+      .withArgs(rootUri, {}, sinon.match.func)
+      .callsArgWithAsync(2, null, rootResponse);
+
       api
       .newRequest()
       .follow('non-existing-link')
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return errorCallback.called; },
         function() {
@@ -147,15 +162,21 @@ describe('traverson-angular', function() {
 
     it('should call errorCallback with err inside recursion', function(done) {
       var err = new Error('test error');
-      get.withArgs(rootUri, sinon.match.func).callsArgWithAsync(
-          1, null, mockResponse({ firstLink: rootUri + '/first' }));
-      get.withArgs(rootUri + '/first', sinon.match.func).
-          callsArgWithAsync(1, err);
+
+      get
+      .withArgs(rootUri, {}, sinon.match.func)
+      .callsArgWithAsync(2, null,
+        mockResponse({ firstLink: rootUri + '/first' }));
+      get
+      .withArgs(rootUri + '/first', {}, sinon.match.func)
+      .callsArgWithAsync(2, err);
+
       api
       .newRequest()
       .follow('firstLink')
       .getResource()
       .then(successCallback, errorCallback);
+
       waitFor(
         function() { return errorCallback.called; },
         function() {
