@@ -3,11 +3,6 @@
     <meta charset="utf-8">
     <title>traverson-angular example</title>
     <link rel="stylesheet" type="text/css" href="assets/bootstrap.min.css">
-    <script src="assets/jquery-2.0.2.min.js"></script>
-    <script src="assets/angular.js"></script>
-    <script src="assets/angular-sanitize.js"></script>
-    <script src="../dist/traverson-angular.js"></script>
-    <script src="traverson-angular-example.js"></script>
   </head>
   <body>
     <div class="container" ng-app="traverson-angular-example">
@@ -19,8 +14,9 @@
         in the browser. <strong>traverson-angular</strong> makes it easy to
         integrate Traverson into your AngularJS application. This example talks
         to the local Traverson test server.</p>
-        <p>There is also the <a href="github.html">GitHub API Example</a> and
-        an <a href="browserify/index.html">example using traverson-angular with
+        <p>There is also the <a href="github.html">GitHub API Example</a>, the
+        <a href="hal.html">HAL example</a> and an
+        <a href="browserify/index.html">example using traverson-angular with
         Browserify</a>.
         </p>
       </div>
@@ -91,7 +87,12 @@
         </div>
         <pre ng-bind="response" class="col-md-6"></pre>
       </div>
-
     </div>
+    <script src="assets/jquery-2.0.2.min.js"></script>
+    <script src="assets/angular.js"></script>
+    <script src="assets/angular-sanitize.js"></script>
+    <script src="../dist/traverson-angular.js"></script>
+    <script src="traverson-angular-example.js"></script>
+
   </body>
 </html>
