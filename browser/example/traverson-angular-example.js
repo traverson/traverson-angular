@@ -49,7 +49,7 @@
 
     $scope.start = function() {
       $scope.response = '... talking to server, please stand by ...';
-      apiService.plainVanilla().then(function(resource) {
+      apiService.plainVanilla().result.then(function(resource) {
          $scope.response = JSON.stringify(resource, null, 2);
       }, function(err) {
          $scope.response = err.message || JSON.stringify(err);
@@ -60,6 +60,7 @@
       'api<br>' +
       '.follow(\'second\', \'doc\')<br>' +
       '.getResource()<br>' +
+      '.result<br>' +
       '.then(function(resource) {<br>' +
       '  // do something with the resource...<br>' +
       '});';
@@ -68,7 +69,7 @@
   app.controller('jsonPathController', function($scope, apiService) {
     $scope.start = function() {
       $scope.response = '... talking to server, please stand by ...';
-      apiService.jsonPath().then(function(resource) {
+      apiService.jsonPath().result.then(function(resource) {
          $scope.response = JSON.stringify(resource, null, 2);
       }, function(err) {
          $scope.response = err.message || JSON.stringify(err);
@@ -79,6 +80,7 @@
       'api<br>' +
       '.follow(\'$.jsonpath.nested.key\')<br>' +
       '.getResource()<br>' +
+      '.result<br>' +
       '.then(function(resource) {<br>' +
       '  // do something with the resource...<br>' +
       '});';
@@ -87,7 +89,7 @@
   app.controller('uriTemplateController', function($scope, apiService) {
     $scope.start = function() {
       $scope.response = '... talking to server, please stand by ...';
-      apiService.uriTemplate().then(function(resource) {
+      apiService.uriTemplate().result.then(function(resource) {
          $scope.response = JSON.stringify(resource, null, 2);
       }, function(err) {
          $scope.response = err.message || JSON.stringify(err);
@@ -99,6 +101,7 @@
       '.follow(\'uri_template\')<br>' +
       '.withTemplateParameters({param: \'foobar\', id: 13})<br>' +
       '.getResource()<br>' +
+      '.result<br>' +
       '.then(function(resource) {<br>' +
       '  // do something with the resource...<br>' +
       '});';
@@ -107,7 +110,7 @@
   app.controller('postController', function($scope, apiService) {
     $scope.start = function() {
       $scope.response = '... talking to server, please stand by ...';
-      apiService.post().then(function(resource) {
+      apiService.post().result.then(function(resource) {
          $scope.response = JSON.stringify(resource, null, 2);
       }, function(err) {
          $scope.response = err.message || JSON.stringify(err);
@@ -119,6 +122,7 @@
       '.json()<br>' +
       '.follow(\'post_link\')<br>' +
       '.post({ payload: \'this is the payload\' });<br>' +
+      '.result<br>' +
       '.then(function(resource) {<br>' +
       '  // do something with the resource...<br>' +
       '});';
