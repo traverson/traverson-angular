@@ -107,4 +107,109 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
   return traverson;
 }]);
 
+
+traversonAngular.factory('$httpTraversonAdapter', [
+  '$http', function $httpTraversonAdapterFactory($http) {
+
+    function Request() { }
+
+    Request.prototype.get = function(uri, options, callback) {
+      return $http.get(uri, mapOptions(options))
+        .then(handleResponse(callback))
+        .catch(handleError(callback));
+    };
+
+    Request.prototype.post = function(uri, options, callback) {
+      return $http.post(uri, mapOptions(options))
+        .then(handleResponse(callback))
+        .catch(handleError(callback));
+    };
+
+    Request.prototype.put = function(uri, options, callback) {
+      return $http.put(uri, mapOptions(options))
+        .then(handleResponse(callback))
+        .catch(handleError(callback));
+    };
+
+    Request.prototype.patch = function(uri, options, callback) {
+      return $http.patch(uri, mapOptions(options))
+        .then(handleResponse(callback))
+        .catch(handleError(callback));
+    };
+
+    Request.prototype.del = function(uri, options, callback) {
+      return $http.delete(uri, mapOptions(options))
+        .then(handleResponse(callback))
+        .catch(handleError(callback));
+    };
+
+    function mapOptions(options) {
+      options = options || {};
+      var newOptions = {};
+      mapQuery(newOptions, options);
+      mapHeaders(newOptions, options);
+      mapAuth(newOptions, options);
+      mapBody(newOptions, options);
+      mapForm(newOptions, options);
+      return newOptions;
+    }
+
+    function mapQuery(newOptions, options) {
+      newOptions.params = options.query;
+    }
+
+    function mapHeaders(newOptions, options) {
+      newOptions.headers || (newOptions.headers = {});
+    }
+
+    function mapAuth(newOptions, options) {
+      var auth = options.auth;
+      if (auth) {
+        var username = auth.user || auth.username;
+        var password = auth.pass || auth.password;
+        newOptions.headers || (newOptions.headers = {});
+        newOptions.headers.Authorization = 'Basic ' + username + ':' + password;
+      }
+    }
+
+    function mapBody(newOptions, options) {
+      var body = options.body;
+      if (body) {
+        newOptions.data = body;
+      }
+    }
+
+    function mapForm(newOptions, options) {
+      var form = options.form;
+      if (form) {
+        newOptions.data = form;
+        newOptions.headers || (newOptions.headers = {});
+        newOptions.headers['Content-Type'] =
+          'application/x-www-form-urlencoded';
+      }
+    }
+
+    function mapResponse(response) {
+      response.body = response.data;
+      response.statusCode = response.status;
+      return response;
+    }
+
+    function handleResponse(callback) {
+      return function(response) {
+        return callback(null, mapResponse(response));
+      };
+    }
+
+    function handleError(callback) {
+      return function(err) {
+        return callback(err);
+      };
+    }
+
+    return new Request();
+
+  }
+]);
+
 module.exports = traversonAngular;
