@@ -25,7 +25,7 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
   var originalMethods = {
     get: Builder.prototype.get,
     getResource: Builder.prototype.getResource,
-    getUri: Builder.prototype.getUri,
+    getUrl: Builder.prototype.getUrl,
     post: Builder.prototype.post,
     put: Builder.prototype.put,
     patch: Builder.prototype.patch,
@@ -76,6 +76,10 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
 
   Builder.prototype.getResource = function() {
     return promisify(this, originalMethods.getResource);
+  };
+
+  Builder.prototype.getUrl = Builder.prototype.getUri = function() {
+    return promisify(this, originalMethods.getUrl);
   };
 
   Builder.prototype.getUri = function() {

@@ -24,7 +24,7 @@ describe('traverson-angular', function() {
 
   beforeEach(function() {
     get = sinon.stub();
-    api.walker.request = { get: get };
+    api.requestModuleInstance = { get: get };
     successCallback = sinon.spy();
     errorCallback = sinon.spy();
   });

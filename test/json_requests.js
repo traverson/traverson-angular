@@ -28,7 +28,6 @@ describe('The JSON client\'s', function() {
   var patch;
   var del;
 
-  var executeRequest;
   var successCallback;
   var errorCallback;
 
@@ -64,7 +63,7 @@ describe('The JSON client\'s', function() {
     put = sinon.stub();
     patch = sinon.stub();
     del = sinon.stub();
-    api.walker.request = {
+    api.requestModuleInstance = {
       get: get,
       post: post,
       put: put,
@@ -83,15 +82,8 @@ describe('The JSON client\'s', function() {
     get
     .withArgs(postUri, {}, sinon.match.func)
     .callsArgWithAsync(2,
-        new Error('GET is not implemented for this URI, please POST ' +
+        new Error('GET is not implemented for this URL, please POST ' +
         'something'));
-
-    executeRequest = sinon.stub(api.finalAction.constructor.prototype,
-        'executeRequest');
-  });
-
-  afterEach(function() {
-    api.finalAction.constructor.prototype.executeRequest.restore();
   });
 
   describe('get method', function() {
@@ -118,7 +110,7 @@ describe('The JSON client\'s', function() {
       // Default stubbing from beforeEach is not what we want here.
       // IMO, get.reset() should be enough, but isnt?
       get = sinon.stub();
-      api.walker.request = { get: get };
+      api.requestModuleInstance = { get: get };
       get.callsArgWithAsync(2, err);
 
       api
@@ -142,7 +134,7 @@ describe('The JSON client\'s', function() {
       // Default stubbing from beforeEach is not what we want here.
       // IMO, get.reset() should be enough, but isnt?
       get = sinon.stub();
-      api.walker.request = { get: get };
+      api.requestModuleInstance = { get: get };
       get
       .withArgs(rootUri, {}, sinon.match.func)
       .callsArgWithAsync(2, null, rootResponse);
@@ -168,13 +160,13 @@ describe('The JSON client\'s', function() {
 
   });
 
-  describe('getUri method', function() {
+  describe('getUrl method', function() {
 
-    it('should follow the links and yield the last URI', function(done) {
+    it('should follow the links and yield the last URL', function(done) {
       api
       .newRequest()
       .follow('get_link')
-      .getUri()
+      .getUrl()
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -188,13 +180,13 @@ describe('The JSON client\'s', function() {
       );
     });
 
-    it('should yield resolved URI if last URI is a URI template',
+    it('should yield resolved URL if last URL is a URI template',
         function(done) {
       api
       .newRequest()
       .follow('template_link')
       .withTemplateParameters({ param: 'substituted' })
-      .getUri()
+      .getUrl()
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -215,12 +207,11 @@ describe('The JSON client\'s', function() {
 
     var result = mockResponse({ result: 'success' }, 201);
 
-    it('should follow the links and post to the last URI',
+    it('should follow the links and post to the last URL',
         function(done) {
-      executeRequest
-      .withArgs(postUri, sinon.match.object, {}, post, payload,
-        sinon.match.func)
-      .callsArgWithAsync(5, null, result, postUri);
+      post
+      .withArgs(postUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
 
       api
       .newRequest()
@@ -233,6 +224,9 @@ describe('The JSON client\'s', function() {
         function() {
           expect(errorCallback).to.not.have.been.called;
           expect(successCallback).to.have.been.calledWith(result);
+          expect(post.firstCall.args[1].body).to.exist;
+          expect(post.firstCall.args[1].body).to.contain(payload.some);
+          expect(post.firstCall.args[1].body).to.contain(payload.data);
           done();
         }
       );
@@ -241,10 +235,9 @@ describe('The JSON client\'s', function() {
     it('should call errorCallback with err when post fails',
         function(done) {
       var err = new Error('test error');
-      executeRequest
-      .withArgs(postUri, sinon.match.object, {}, post, payload,
-        sinon.match.func)
-      .callsArgWithAsync(5, err);
+      post
+      .withArgs(postUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, err);
 
       api
       .newRequest()
@@ -268,11 +261,11 @@ describe('The JSON client\'s', function() {
 
     var result = mockResponse({ result: 'success' }, 200);
 
-    it('should follow the links and put to the last URI',
+    it('should follow the links and put to the last URL',
         function(done) {
-      executeRequest
-      .withArgs(putUri, sinon.match.object, {}, put, payload, sinon.match.func)
-      .callsArgWithAsync(5, null, result, putUri);
+      put
+      .withArgs(putUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
 
       api
       .newRequest()
@@ -285,6 +278,9 @@ describe('The JSON client\'s', function() {
         function() {
           expect(successCallback).to.have.been.calledWith(result);
           expect(errorCallback).to.not.have.been.called;
+          expect(put.firstCall.args[1].body).to.exist;
+          expect(put.firstCall.args[1].body).to.contain(payload.some);
+          expect(put.firstCall.args[1].body).to.contain(payload.data);
           done();
         }
       );
@@ -293,9 +289,9 @@ describe('The JSON client\'s', function() {
     it('should call errorCallback with err when put fails',
         function(done) {
       var err = new Error('test error');
-      executeRequest
-      .withArgs(putUri, sinon.match.object, {}, put, payload, sinon.match.func)
-      .callsArgWithAsync(5, err);
+      put
+      .withArgs(putUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, err);
 
       api
       .newRequest()
@@ -318,12 +314,11 @@ describe('The JSON client\'s', function() {
 
     var result = mockResponse({ result: 'success' }, 200);
 
-    it('should follow the links and patch the last URI',
+    it('should follow the links and patch the last URL',
         function(done) {
-      executeRequest
-      .withArgs(patchUri, sinon.match.object, {}, patch, payload,
-        sinon.match.func)
-      .callsArgWithAsync(5, null, result, patchUri);
+      patch
+      .withArgs(patchUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
 
       api
       .newRequest()
@@ -336,6 +331,9 @@ describe('The JSON client\'s', function() {
         function() {
           expect(successCallback).to.have.been.calledWith(result);
           expect(errorCallback).to.not.have.been.called;
+          expect(patch.firstCall.args[1].body).to.exist;
+          expect(patch.firstCall.args[1].body).to.contain(payload.some);
+          expect(patch.firstCall.args[1].body).to.contain(payload.data);
           done();
         }
       );
@@ -344,10 +342,9 @@ describe('The JSON client\'s', function() {
     it('should call errorCallback with err when patch fails',
         function(done) {
       var err = new Error('test error');
-      executeRequest
-      .withArgs(patchUri, sinon.match.object, {}, patch, payload,
-        sinon.match.func)
-      .callsArgWithAsync(5, err, null);
+      patch
+      .withArgs(patchUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, err);
 
       api
       .newRequest()
@@ -370,11 +367,11 @@ describe('The JSON client\'s', function() {
 
     var result = mockResponse(null, 204);
 
-    it('should follow the links and delete the last URI',
+    it('should follow the links and delete the last URL',
         function(done) {
-      executeRequest
-      .withArgs(deleteUri, sinon.match.object, {}, del, null, sinon.match.func)
-      .callsArgWithAsync(5, null, result, deleteUri);
+      del
+      .withArgs(deleteUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, null, result);
 
       api
       .newRequest()
@@ -395,9 +392,9 @@ describe('The JSON client\'s', function() {
     it('should call errorCallback with err when deleting fails',
         function(done) {
       var err = new Error('test error');
-      executeRequest
-      .withArgs(deleteUri, sinon.match.object, {}, del, null, sinon.match.func)
-      .callsArgWithAsync(5, err);
+      del
+      .withArgs(deleteUri, sinon.match.object, sinon.match.func)
+      .callsArgWithAsync(2, err);
 
       api
       .newRequest()
