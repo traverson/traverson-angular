@@ -197,6 +197,8 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 1.2.0 2015-03-15:
+    * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
 * 1.1.0 2015-03-03:
     * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
     * The new feature to abort a link traversal process made it necessary to change the API: The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` still works for now, but is deprecated and will be removed in version 2.0.0.
