@@ -82,10 +82,6 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
     return promisify(this, originalMethods.getUrl);
   };
 
-  Builder.prototype.getUri = function() {
-    return promisify(this, originalMethods.getUri);
-  };
-
   Builder.prototype.post = function(body) {
     return promisify(this, originalMethods.post, [body]);
   };
