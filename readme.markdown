@@ -197,6 +197,8 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 1.2.1 2015-03-16:
+    * Bugfix: fix `getUri` alias for `getUrl`.
 * 1.2.0 2015-03-15:
     * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
     * The method `getUri` has been renamed to `getUrl`. `getUri` is now deprecated, but is kept as an alias for `getUrl`.
