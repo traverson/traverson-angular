@@ -243,7 +243,7 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
-* 2.0.0 (not yet released):
+* 2.0.0 2015-04-08:
     * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/basti1302/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
     * The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` was deprecated in version 1.1.0 and has been removed with this version.
 * 1.2.1 2015-03-16:
