@@ -218,13 +218,13 @@ describe('Continuation of traversals', function() {
   }
 
   function setupTest(method, body, links1, links2, results, done) {
-    var builder = api.newRequest().follow('link1');
+    var builder = api.newRequest().follow(links1);
 
     var request = method.apply(builder, (body ? [body] : []));
     request.result.then(successCallback1, errorCallback1);
 
     request.continue().then(function(nextBuilder) {
-      nextBuilder.follow('link2');
+      nextBuilder.follow(links2);
       method
       .apply(nextBuilder, (body ? [body] : []))
       .result
@@ -237,15 +237,7 @@ describe('Continuation of traversals', function() {
                successCallback2.called;
       },
       function() {
-        checkResult({
-          method: method,
-          firstResponse: response2,
-          secondResponse: response3,
-          expectedUrl1: url1,
-          expectedUrl2: url2,
-          expectedNumberOfHttpGetRequests: 3,
-          noLinksForSecondTraversal: false,
-        });
+        checkResult(results);
         done();
       }
     );
