@@ -1,5 +1,5 @@
 /* global angular */
-/* jshint maxparams: 7 */
+/* jshint maxparams: 6 */
 /* jshint maxcomplexity: 12 */
 
 'use strict';
@@ -24,7 +24,7 @@ chai.use(sinonChai);
 // - mixed continuations (first with getResource second with get or vice versa
 //   plus other combinations, getUrl, post, ...)
 
-describe.only('Continuation of traversals', function() {
+describe('Continuation of traversals', function() {
 
   var get;
   var post;
@@ -102,206 +102,100 @@ describe.only('Continuation of traversals', function() {
 
     it('should continue with links after a no-link traversal',
         function(done) {
-      var builder = api.newRequest();
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        nextBuilder.follow('link1', 'link2', 'link3');
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: rootResponse,
-            secondResponse: response4,
-            expectedUrl1: rootUrl,
-            expectedUrl2: url3,
-            expectedNumberOfHttpGetRequests: 4,
-            noLinksForSecondTraversal: false,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        [],
+        ['link1', 'link2', 'link3'], {
+          method: method,
+          firstResponse: rootResponse,
+          secondResponse: response4,
+          expectedUrl1: rootUrl,
+          expectedUrl2: url3,
+          expectedNumberOfHttpGetRequests: 4,
+          noLinksForSecondTraversal: false,
+        }, done);
     });
 
     it('should continue with a link (1|1)', function(done) {
-      var builder = api.newRequest().follow('link1');
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        nextBuilder.follow('link2');
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: response2,
-            secondResponse: response3,
-            expectedUrl1: url1,
-            expectedUrl2: url2,
-            expectedNumberOfHttpGetRequests: 3,
-            noLinksForSecondTraversal: false,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        ['link1'],
+        ['link2'], {
+          method: method,
+          firstResponse: response2,
+          secondResponse: response3,
+          expectedUrl1: url1,
+          expectedUrl2: url2,
+          expectedNumberOfHttpGetRequests: 3,
+          noLinksForSecondTraversal: false,
+        }, done);
     });
 
     it('should continue with a link (2|1)', function(done) {
-      var builder = api.newRequest().follow('link1', 'link2');
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        nextBuilder.follow('link3');
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: response3,
-            secondResponse: response4,
-            expectedUrl1: url2,
-            expectedUrl2: url3,
-            expectedNumberOfHttpGetRequests: 4,
-            noLinksForSecondTraversal: false,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        ['link1', 'link2'],
+        ['link3'], {
+          method: method,
+          firstResponse: response3,
+          secondResponse: response4,
+          expectedUrl1: url2,
+          expectedUrl2: url3,
+          expectedNumberOfHttpGetRequests: 4,
+          noLinksForSecondTraversal: false,
+        }, done);
     });
 
     it('should continue with a link (1|2)', function(done) {
-      var builder = api.newRequest().follow('link1');
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        nextBuilder.follow('link2', 'link3');
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: response2,
-            secondResponse: response4,
-            expectedUrl1: url1,
-            expectedUrl2: url3,
-            expectedNumberOfHttpGetRequests: 4,
-            noLinksForSecondTraversal: false,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        ['link1'],
+        ['link2', 'link3'], {
+          method: method,
+          firstResponse: response2,
+          secondResponse: response4,
+          expectedUrl1: url1,
+          expectedUrl2: url3,
+          expectedNumberOfHttpGetRequests: 4,
+          noLinksForSecondTraversal: false,
+        }, done);
     });
 
     it('should continue with no links', function(done) {
-      var builder = api.newRequest().follow('link1', 'link2', 'link3');
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: response4,
-            secondResponse: response4,
-            expectedUrl1: url3,
-            expectedUrl2: url3,
-            expectedNumberOfHttpGetRequests: 4,
-            noLinksForSecondTraversal: true,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        ['link1', 'link2', 'link3'],
+        [], {
+          method: method,
+          firstResponse: response4,
+          secondResponse: response4,
+          expectedUrl1: url3,
+          expectedUrl2: url3,
+          expectedNumberOfHttpGetRequests: 4,
+          noLinksForSecondTraversal: true,
+        }, done);
     });
 
     it('should continue with no links after a no-link traversal',
         function(done) {
-      var builder = api.newRequest();
-
-      var request = method.apply(builder, (body ? [body] : []));
-      request.result.then(successCallback1, errorCallback1);
-
-      request.continue().then(function(nextBuilder) {
-        method
-        .apply(nextBuilder, (body ? [body] : []))
-        .result
-        .then(successCallback2, errorCallback2);
-      });
-
-      waitFor(
-        function() {
-          return successCallback1.called &&
-                 successCallback2.called;
-        },
-        function() {
-          checkResult({
-            method: method,
-            firstResponse: rootResponse,
-            secondResponse: rootResponse,
-            expectedUrl1: rootUrl,
-            expectedUrl2: rootUrl,
-            expectedNumberOfHttpGetRequests: 1,
-            noLinksForSecondTraversal: true,
-          });
-          done();
-        }
-      );
+      setupTest(
+        method,
+        body,
+        [],
+        [], {
+          method: method,
+          firstResponse: rootResponse,
+          secondResponse: rootResponse,
+          expectedUrl1: rootUrl,
+          expectedUrl2: rootUrl,
+          expectedNumberOfHttpGetRequests: 1,
+          noLinksForSecondTraversal: true,
+        }, done);
     });
 
   } // function defineTestsForMethod
@@ -323,63 +217,97 @@ describe.only('Continuation of traversals', function() {
     });
   }
 
-  function checkResult(params) {
+  function setupTest(method, body, links1, links2, results, done) {
+    var builder = api.newRequest().follow('link1');
+
+    var request = method.apply(builder, (body ? [body] : []));
+    request.result.then(successCallback1, errorCallback1);
+
+    request.continue().then(function(nextBuilder) {
+      nextBuilder.follow('link2');
+      method
+      .apply(nextBuilder, (body ? [body] : []))
+      .result
+      .then(successCallback2, errorCallback2);
+    });
+
+    waitFor(
+      function() {
+        return successCallback1.called &&
+               successCallback2.called;
+      },
+      function() {
+        checkResult({
+          method: method,
+          firstResponse: response2,
+          secondResponse: response3,
+          expectedUrl1: url1,
+          expectedUrl2: url2,
+          expectedNumberOfHttpGetRequests: 3,
+          noLinksForSecondTraversal: false,
+        });
+        done();
+      }
+    );
+  }
+
+  function checkResult(results) {
     expect(errorCallback1).to.not.have.been.called;
     expect(errorCallback2).to.not.have.been.called;
-    if (params.method === api.get) {
+    if (results.method === api.get) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse);
+        results.firstResponse);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests);
-    } else if (params.method === api.getResource) {
+        results.secondResponse);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests);
+    } else if (results.method === api.getResource) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse.doc);
+        results.firstResponse.doc);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse.doc);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests);
-    } else if (params.method === api.getUrl) {
+        results.secondResponse.doc);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests);
+    } else if (results.method === api.getUrl) {
       expect(successCallback1).to.have.been.calledWith(
-        params.expectedUrl1);
+        results.expectedUrl1);
       expect(successCallback2).to.have.been.calledWith(
-        params.expectedUrl2);
+        results.expectedUrl2);
       expect(get.callCount).to.equal(
-        params.expectedNumberOfHttpGetRequests - 1);
-    } else if (params.method === api.post) {
+        results.expectedNumberOfHttpGetRequests - 1);
+    } else if (results.method === api.post) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse);
+        results.firstResponse);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests -
-         (params.noLinksForSecondTraversal ? 1 : 2));
+        results.secondResponse);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests -
+         (results.noLinksForSecondTraversal ? 1 : 2));
       expect(post.callCount).to.equal(2);
-    } else if (params.method === api.put) {
+    } else if (results.method === api.put) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse);
+        results.firstResponse);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests -
-         (params.noLinksForSecondTraversal ? 1 : 2));
+        results.secondResponse);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests -
+         (results.noLinksForSecondTraversal ? 1 : 2));
       expect(put.callCount).to.equal(2);
-    } else if (params.method === api.patch) {
+    } else if (results.method === api.patch) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse);
+        results.firstResponse);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests -
-         (params.noLinksForSecondTraversal ? 1 : 2));
+        results.secondResponse);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests -
+         (results.noLinksForSecondTraversal ? 1 : 2));
       expect(patch.callCount).to.equal(2);
-    } else if (params.method === api.delete) {
+    } else if (results.method === api.delete) {
       expect(successCallback1).to.have.been.calledWith(
-        params.firstResponse);
+        results.firstResponse);
       expect(successCallback2).to.have.been.calledWith(
-        params.secondResponse);
-      expect(get.callCount).to.equal(params.expectedNumberOfHttpGetRequests -
-         (params.noLinksForSecondTraversal ? 1 : 2));
+        results.secondResponse);
+      expect(get.callCount).to.equal(results.expectedNumberOfHttpGetRequests -
+         (results.noLinksForSecondTraversal ? 1 : 2));
       expect(del.callCount).to.equal(2);
     } else {
-      throw new Error('Unknown method: ' + params.method.name + ': ' +
-          params.method);
+      throw new Error('Unknown method: ' + results.method.name + ': ' +
+          results.method);
     }
   }
 
