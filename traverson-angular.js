@@ -37,37 +37,36 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
 
     argsArray = argsArray || [];
 
-    var callback = function(err, result, uri) {
+    var traversal;
+    var callback = function(err, result, _traversal) {
       if (err) {
         err.result = result;
-        err.uri = uri;
         deferred.reject(err);
       } else {
+        traversal = _traversal;
         deferred.resolve(result);
       }
     };
 
     argsArray.push(callback);
 
-    var traversal = originalMethod.apply(that, argsArray);
+    var traversalHandler = originalMethod.apply(that, argsArray);
 
-    // TODO What we actually want is
-    // return {
-    //   result: deferred.promise,
-    //   abort: traversal.abort;
-    // };
-    //
-    // - that is, return an object that only has two properties
-    // (result: the promise, abort: the function to abort the traversal) but
-    // that would break clients, which rely on the returned value being the
-    // promise. Have to wait until next breaking relase (2.0.0) to change that.
-    // For now, we return the promise directly, but also tack the properties
-    // result (again, the promise, attached to itself) and abort (the function
-    // to abort the traversal) to it.
-    var returnValue = deferred.promise;
-    returnValue.result = deferred.promise;
-    returnValue.abort = traversal.abort;
-    return returnValue;
+    function continueTraversal() {
+      var deferredContinue = $q.defer();
+      deferred.promise.then(function() {
+        deferredContinue.resolve(traversal.continue());
+      }, function() {
+        throw new Error('Can\'t continue from a broken traversal.');
+      });
+      return deferredContinue.promise;
+    }
+
+    return {
+       result: deferred.promise,
+       continue: continueTraversal,
+       abort: traversalHandler.abort,
+    };
   }
 
   Builder.prototype.get = function() {
