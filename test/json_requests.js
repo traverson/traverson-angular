@@ -93,6 +93,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('get_link')
       .get()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -116,6 +117,7 @@ describe('The JSON client\'s', function() {
       api
       .newRequest()
       .get()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -146,6 +148,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('get_link', 'another_link')
       .get()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -167,6 +170,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('get_link')
       .getUrl()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -187,6 +191,7 @@ describe('The JSON client\'s', function() {
       .follow('template_link')
       .withTemplateParameters({ param: 'substituted' })
       .getUrl()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -217,6 +222,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('post_link')
       .post(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -243,6 +249,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('post_link')
       .post(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -271,6 +278,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('put_link')
       .put(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -297,6 +305,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('put_link')
       .put(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -324,6 +333,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('patch_link')
       .patch(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -350,6 +360,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('patch_link')
       .patch(payload)
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -377,6 +388,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('delete_link')
       .delete()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
@@ -400,6 +412,7 @@ describe('The JSON client\'s', function() {
       .newRequest()
       .follow('delete_link')
       .del()
+      .result
       .then(successCallback, errorCallback);
 
       waitFor(
