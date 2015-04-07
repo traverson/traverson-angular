@@ -66,6 +66,13 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
        result: deferred.promise,
        continue: continueTraversal,
        abort: traversalHandler.abort,
+       then: function() {
+         throw new Error('As of version 2.0.0, Traverson\'s action methods ' +
+           'do no longer return the promise directly. Code like \n' +
+           'traverson.from(url).follow(...).getResource().then(...)\n' +
+           'needs to be changed to \n' +
+           'traverson.from(url).follow(...).getResource().result.then(...)');
+       },
     };
   }
 
