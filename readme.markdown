@@ -142,11 +142,12 @@ traverson
 
 The only difference is `.getResource(function(error, document) {` => `.getResource().result.then(function(document) {`.
 
-Actually, the object returned by `getResource` has two properties:
-* `result`: the promise representing the link traversal and
-* `abort`: a function that can be used to abort the link traversal.
+Actually, the object returned by `getResource` has three properties:
+* `result`: the promise representing the link traversal,
+* `continue`: a function that can be used to [continue](#continuing-a-link-traversal) a finished link traversal and
+* `abort`: a function that can be used to [abort](#aborting-the-link-traversal) link traversal that is in progress.
 
-The following action methods of the Traverson request builder return such an object (`{ result, abort }`) when used via traverson-angular:
+The following action methods of the Traverson request builder return such an object (`{ result, continue, abort }`) when used via traverson-angular:
 
 * `get()`
 * `getResource()`
@@ -155,6 +156,51 @@ The following action methods of the Traverson request builder return such an obj
 * `put(payload)`
 * `patch(payload)`
 * `delete`
+
+### Continuing a Link Traversal
+
+See [Traverson's README](https://github.com/basti1302/traverson#continuing-a-link-traversal) for a general description of the `continue()` feature. This section just describes how to use it with traverson-angular.
+
+The object returned by the action methods (`get`, `getResource`, `getUrl`, `post`, `put`, `patch`, `delete`) have a property `continue` which is a function that can be used to obtain a promise that is resolved when the link traversal finishes (as does the `result` promise) and which gives you a request builder instance which can be used just as the standard [request builder](https://github.com/basti1302/traverson/blob/master/api.markdown#request-builder). That is, it has the same configuration and action methods.
+
+So while with plain vanilla Traverson (not traverson-angular) you would continue a successful link traversal process like this
+
+```javascript
+traverson
+.from(rootUrl)
+.follow('link1', 'link2')
+.getResource(function(err, firstResource, traversal) {
+  if (err) { return done(err); }
+  // do something with the first resource, maybe decide where to go from here.
+  traversal
+  .continue()
+  .follow('link3', 'link3')
+  .getResource(function(err, secondResource) {
+    if (err) { return done(err); }
+    // do something with the second resource
+  });
+});
+```
+
+...this is how it is done with traverson-angular:
+
+<pre lang="javascript">
+var request =
+traverson
+.from('http://api.example.com')
+.follow('link1', 'link2');
+.getResource();
+
+request.result.then(successCallback, errorCallback);
+
+request.continue().then(function(nextBuilder) {
+  nextBuilder.follow(links2);
+  method
+  .apply(nextBuilder, (body ? [body] : []))
+  .result
+  .then(successCallback2, errorCallback2);
+});
+</pre>
 
 ### Aborting the Link Traversal
 
@@ -197,6 +243,9 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 2.0.0 (not yet released):
+    * Continue link traversals with `continue` (see XXX-TODO-Link-to-readme and also [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
+    * The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` was deprecated in version 1.1.0 and has been removed with this version.
 * 1.2.1 2015-03-16:
     * Bugfix: fix `getUri` alias for `getUrl`.
 * 1.2.0 2015-03-15:
