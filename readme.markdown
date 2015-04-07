@@ -161,9 +161,9 @@ The following action methods of the Traverson request builder return such an obj
 
 See [Traverson's README](https://github.com/basti1302/traverson#continuing-a-link-traversal) for a general description of the `continue()` feature. This section just describes how to use it with traverson-angular.
 
-The object returned by the action methods (`get`, `getResource`, `getUrl`, `post`, `put`, `patch`, `delete`) have a property `continue` which is a function that can be used to obtain a promise that is resolved when the link traversal finishes (as does the `result` promise) and which gives you a request builder instance which can be used just as the standard [request builder](https://github.com/basti1302/traverson/blob/master/api.markdown#request-builder). That is, it has the same configuration and action methods.
+The object returned by the action methods (`get`, `getResource`, `getUrl`, `post`, `put`, `patch`, `delete`) have a property `continue` which is a function that can be used to obtain a promise that is resolved when the link traversal finishes (as does the `result` promise) and which gives you a request builder instance that starts at the last URL/resource of the finished link traversal. It can be used just as the standard [request builder](https://github.com/basti1302/traverson/blob/master/api.markdown#request-builder). That is, it has the same configuration and action methods. It enables you to continue the link traversal from the last target resource and follow more links from there.
 
-So while with plain vanilla Traverson (not traverson-angular) you would continue a successful link traversal process like this
+So while with plain vanilla Traverson (not traverson-angular) you would continue a successful link traversal process like this:
 
 ```javascript
 traverson
@@ -193,10 +193,10 @@ traverson
 
 request.result.then(successCallback, errorCallback);
 
-request.continue().then(function(nextBuilder) {
-  nextBuilder.follow(links2);
-  method
-  .apply(nextBuilder, (body ? [body] : []))
+request.continue().then(function(request) {
+  request
+  .follow('link3', 'link4');
+  .getResource()
   .result
   .then(successCallback2, errorCallback2);
 });
@@ -244,7 +244,7 @@ Release Notes
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
 * 2.0.0 (not yet released):
-    * Continue link traversals with `continue` (see XXX-TODO-Link-to-readme and also [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
+    * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/basti1302/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
     * The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` was deprecated in version 1.1.0 and has been removed with this version.
 * 1.2.1 2015-03-16:
     * Bugfix: fix `getUri` alias for `getUrl`.
