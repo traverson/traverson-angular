@@ -20,7 +20,9 @@ if (typeof angular !== 'undefined') {
 
 var traversonAngular = ng.module('traverson', []);
 
-traversonAngular.factory('traverson', ['$q', '$httpTraversonAdapter', function traversonFactory($q, $httpTraversonAdapter) {
+traversonAngular.factory('traverson',
+  ['$q', '$httpTraversonAdapter',
+    function traversonFactory($q, $httpTraversonAdapter) {
   var Builder = traverson._Builder;
   var originalMethods = {
     get: Builder.prototype.get,
@@ -196,7 +198,8 @@ traversonAngular.factory('$httpTraversonAdapter', [
         var username = auth.user || auth.username;
         var password = auth.pass || auth.password;
         mappedOptions.headers = mappedOptions.headers || {};
-        mappedOptions.headers.Authorization = 'Basic ' + username + ':' + password;
+        mappedOptions.headers.Authorization = 'Basic ' + username + ':' +
+          password;
       }
     }
 
@@ -256,6 +259,6 @@ AbortHandle.prototype.on = function(event, fn) {
     throw new Error('Event ' + event + ' not supported');
   }
   this.listeners.push(fn);
-}
+};
 
 module.exports = traversonAngular;

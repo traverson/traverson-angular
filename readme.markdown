@@ -157,6 +157,25 @@ The following action methods of the Traverson request builder return such an obj
 * `patch(payload)`
 * `delete`
 
+### Using AngularJS' $http Service Instead Of Traverson's HTTP Module
+
+Traverson has it's own HTTP module (based on [superagent](https://github.com/visionmedia/superagent)) and by default, this is used to make HTTP requests. If you want to use Traverson in a project that makes use of AngularJS' $http service and its configuration possibilities (default headers, interceptors and so on), these configurations do not apply automatically to the requests issued by Traverson. If you want that, you can configure traverson-angular to use $http instead of Traverson's HTTP module by calling `useAngularHttp()` on the request builder.
+
+Example:
+
+<pre lang="javascript">
+traverson
+.from('http://api.example.com')
+<b>.useAngularHttp()</b>
+.newRequest()
+.follow('link_to', 'resource')
+.getResource()
+.result
+.then(function(document) {
+  ...
+});
+</pre>
+
 ### Continuing a Link Traversal
 
 See [Traverson's README](https://github.com/basti1302/traverson#continuing-a-link-traversal) for a general description of the `continue()` feature. This section just describes how to use it with traverson-angular.
@@ -243,6 +262,8 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 2.1.0 2015-04-11:
+    * Option to use AngularJS' $http service instead of Traverson's HTTP module.
 * 2.0.0 2015-04-08:
     * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/basti1302/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
     * The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` was deprecated in version 1.1.0 and has been removed with this version.
