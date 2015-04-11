@@ -209,7 +209,7 @@ As mentioned above, the object returned by the action methods returns an object 
 So while with plain vanilla Traverson (not traverson-angular) you would abort a link traversal process like this
 
 <pre lang="javascript">
-var traversal =
+var handle =
 traverson
 .from('http://api.example.com')
 .newRequest()
@@ -217,13 +217,13 @@ traverson
 .getResource(...);
 
 // abort the link traversal
-<b>traversal.abort();</b>
+<b>handle.abort();</b>
 </pre>
 
 ...this is how it is done with traverson-angular:
 
 <pre lang="javascript">
-var traversal =
+var handle =
 traverson
 .from('http://api.example.com')
 .newRequest()
@@ -231,10 +231,10 @@ traverson
 .getResource();
 
 // register callbacks
-traversal.result.then(successCallback, errorCallback);
+handle.result.then(successCallback, errorCallback);
 
 // abort the link traversal
-<b>traversal.abort()</b>
+<b>handle.abort()</b>
 </pre>
 
 

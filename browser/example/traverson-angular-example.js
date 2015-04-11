@@ -9,15 +9,17 @@
 
   var rootUri = '/';
 
-  app.controller('generalSetup', function($scope) {
-    $scope.code =
-      'var rootUri = \'' + rootUri + '\';<br>' +
-      'var api = traverson.from(rootUri).json();<br>';
-  });
-
   app.service('apiService', function(traverson) {
 
     var api = traverson.from(rootUri).json();
+
+    this.setUseAngularHttp = function(val) {
+      if (val) {
+        api.useAngularHttp();
+      } else {
+        api = traverson.from(rootUri).json();
+      }
+    };
 
     this.plainVanilla = function() {
       return api
@@ -43,6 +45,27 @@
       .follow('post_link')
       .post({ payload: 'this is the payload' });
     };
+  });
+
+  app.controller('main', function($scope) {
+    $scope.config = {
+      use$http: false,
+    };
+  });
+
+  app.controller('generalSetup', function($scope, apiService) {
+    function code() {
+      return 'var rootUri = \'' + rootUri + '\';<br>' +
+      'var api = traverson.from(rootUri).json()' +
+      ($scope.config.use$http ? '.useAngularHttp()' : '') +
+      ';<br>';
+    }
+    $scope.code = code();
+    $scope.$parent.$watch('config.use$http', function(newValue) {
+      console.log(newValue);
+      apiService.setUseAngularHttp(newValue);
+      $scope.code = code();
+    });
   });
 
   app.controller('plainVanillaController', function($scope, apiService) {
@@ -110,7 +133,9 @@
   app.controller('postController', function($scope, apiService) {
     $scope.start = function() {
       $scope.response = '... talking to server, please stand by ...';
-      apiService.post().result.then(function(resource) {
+      apiService.post().result.then(function(response) {
+         var body = response.body;
+         var resource = JSON.parse(body);
          $scope.response = JSON.stringify(resource, null, 2);
       }, function(err) {
          $scope.response = err.message || JSON.stringify(err);

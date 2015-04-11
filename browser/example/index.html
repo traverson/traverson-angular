@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="assets/bootstrap.min.css">
   </head>
   <body>
-    <div class="container" ng-app="traverson-angular-example">
+    <div class="container" ng-app="traverson-angular-example" ng-controller="main">
       <div class="jumbotron">
         <h1>traverson-angular</h1>
         <h2>AngularJS adapter for Traverson</h2>
@@ -34,6 +34,15 @@
         <tt>file:...</tt> the examples on this page will <em>not</em> work.
         </p>
       </small>
+
+      <h2>Configuration</h2>
+      <form class="form-horizontal">
+        <div class="form-group">
+          <label>
+            <input ng-model="config.use$http" type="checkbox"> Use AngularJS' $http instead of Traverson's HTTP module
+          </label>
+        </div>
+      </form>
 
       <h2>Setup</h2>
       <div ng-controller="generalSetup" ng-bind-html="code">

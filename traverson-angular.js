@@ -20,7 +20,7 @@ if (typeof angular !== 'undefined') {
 
 var traversonAngular = ng.module('traverson', []);
 
-traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
+traversonAngular.factory('traverson', ['$q', '$httpTraversonAdapter', function traversonFactory($q, $httpTraversonAdapter) {
   var Builder = traverson._Builder;
   var originalMethods = {
     get: Builder.prototype.get,
@@ -104,93 +104,121 @@ traversonAngular.factory('traverson', ['$q', function traversonFactory($q) {
     return promisify(this, originalMethods.delete);
   };
 
+  Builder.prototype.useAngularHttp = function() {
+    this.withRequestLibrary($httpTraversonAdapter);
+  };
+
   return traverson;
 }]);
 
-
 traversonAngular.factory('$httpTraversonAdapter', [
-  '$http', function $httpTraversonAdapterFactory($http) {
+  '$http', '$q', function $httpTraversonAdapterFactory($http, $q) {
 
     function Request() { }
 
     Request.prototype.get = function(uri, options, callback) {
-      return $http.get(uri, mapOptions(options))
-        .then(handleResponse(callback))
-        .catch(handleError(callback));
+      options = mapOptions(options);
+      $http
+      .get(uri, options)
+      .then(handleResponse(callback))
+      .catch(handleError(callback));
+      return new AbortHandle(options.timeout);
     };
 
     Request.prototype.post = function(uri, options, callback) {
-      return $http.post(uri, mapOptions(options))
-        .then(handleResponse(callback))
-        .catch(handleError(callback));
+      options = mapOptions(options);
+      $http
+      .post(uri, options.data, options)
+      .then(handleResponse(callback))
+      .catch(handleError(callback));
+      return new AbortHandle(options.timeout);
     };
 
     Request.prototype.put = function(uri, options, callback) {
-      return $http.put(uri, mapOptions(options))
-        .then(handleResponse(callback))
-        .catch(handleError(callback));
+      options = mapOptions(options);
+      $http
+      .put(uri, options.data, options)
+      .then(handleResponse(callback))
+      .catch(handleError(callback));
+      return new AbortHandle(options.timeout);
     };
 
     Request.prototype.patch = function(uri, options, callback) {
-      return $http.patch(uri, mapOptions(options))
-        .then(handleResponse(callback))
-        .catch(handleError(callback));
+      options = mapOptions(options);
+      $http
+      .patch(uri, options.data, options)
+      .then(handleResponse(callback))
+      .catch(handleError(callback));
+      return new AbortHandle(options.timeout);
     };
 
     Request.prototype.del = function(uri, options, callback) {
-      return $http.delete(uri, mapOptions(options))
-        .then(handleResponse(callback))
-        .catch(handleError(callback));
+      options = mapOptions(options);
+      $http
+      .delete(uri, options)
+      .then(handleResponse(callback))
+      .catch(handleError(callback));
+      return new AbortHandle(options.timeout);
     };
 
     function mapOptions(options) {
       options = options || {};
-      var newOptions = {};
-      mapQuery(newOptions, options);
-      mapHeaders(newOptions, options);
-      mapAuth(newOptions, options);
-      mapBody(newOptions, options);
-      mapForm(newOptions, options);
-      return newOptions;
+      var mappedOptions = {};
+      mapQuery(mappedOptions, options);
+      mapHeaders(mappedOptions, options);
+      mapAuth(mappedOptions, options);
+      mapBody(mappedOptions, options);
+      mapForm(mappedOptions, options);
+      // do not parse JSON automatically, this will trip up Traverson
+      mappedOptions.transformResponse = function(data, headersGetter, status) {
+        return data;
+      };
+      // hook to abort the request, if necessary
+      mappedOptions.timeout = $q.defer();
+      return mappedOptions;
     }
 
-    function mapQuery(newOptions, options) {
-      newOptions.params = options.query;
+    function mapQuery(mappedOptions, options) {
+      if (options.query) {
+        mappedOptions.params = options.query;
+      }
     }
 
-    function mapHeaders(newOptions, options) {
-      newOptions.headers || (newOptions.headers = {});
+    function mapHeaders(mappedOptions, options) {
+      if (options.headers) {
+        mappedOptions.headers = options.headers;
+      }
     }
 
-    function mapAuth(newOptions, options) {
+    function mapAuth(mappedOptions, options) {
       var auth = options.auth;
       if (auth) {
         var username = auth.user || auth.username;
         var password = auth.pass || auth.password;
-        newOptions.headers || (newOptions.headers = {});
-        newOptions.headers.Authorization = 'Basic ' + username + ':' + password;
+        mappedOptions.headers = mappedOptions.headers || {};
+        mappedOptions.headers.Authorization = 'Basic ' + username + ':' + password;
       }
     }
 
-    function mapBody(newOptions, options) {
-      var body = options.body;
-      if (body) {
-        newOptions.data = body;
+    function mapBody(mappedOptions, options) {
+      if (options.body) {
+        mappedOptions.data = options.body;
       }
     }
 
-    function mapForm(newOptions, options) {
+    function mapForm(mappedOptions, options) {
       var form = options.form;
       if (form) {
-        newOptions.data = form;
-        newOptions.headers || (newOptions.headers = {});
-        newOptions.headers['Content-Type'] =
+        mappedOptions.data = form;
+        mappedOptions.headers = mappedOptions.headers || {};
+        mappedOptions.headers['Content-Type'] =
           'application/x-www-form-urlencoded';
       }
     }
 
     function mapResponse(response) {
       response.body = response.data;
+      response.headers = response.headers();
       response.statusCode = response.status;
       return response;
     }
@@ -208,8 +236,26 @@ traversonAngular.factory('$httpTraversonAdapter', [
     }
 
     return new Request();
-
   }
 ]);
+
+function AbortHandle(abortPromise) {
+  this.abortPromise = abortPromise;
+  this.listeners = [];
+}
+
+AbortHandle.prototype.abort = function() {
+  this.abortPromise.resolve();
+  this.listeners.forEach(function(fn) {
+    fn.call();
+  });
+};
+
+AbortHandle.prototype.on = function(event, fn) {
+  if (event !== 'abort') {
+    throw new Error('Event ' + event + ' not supported');
+  }
+  this.listeners.push(fn);
+}
 
 module.exports = traversonAngular;
