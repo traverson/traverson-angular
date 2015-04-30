@@ -108,6 +108,7 @@ traversonAngular.factory('traverson',
 
   Builder.prototype.useAngularHttp = function() {
     this.withRequestLibrary($httpTraversonAdapter);
+    return this;
   };
 
   return traverson;
