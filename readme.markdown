@@ -262,6 +262,8 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
+* 2.1.1 2015-04-30:
+    * Allow chaining .useAngularHttp() method (thanks to @joshuajabbour)
 * 2.1.0 2015-04-11:
     * Option to use AngularJS' $http service instead of Traverson's HTTP module.
 * 2.0.0 2015-04-08:
