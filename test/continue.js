@@ -98,6 +98,53 @@ describe('Continuation of traversals', function() {
     defineTestsForMethod(api.delete);
   });
 
+  it('should branch out with continue and newRequest', function(done) {
+    var successCallback3 = sinon.spy();
+    var errorCallback3 = sinon.spy();
+    var successCallback4 = sinon.spy();
+    var errorCallback4 = sinon.spy();
+    var request = api
+    .newRequest()
+    .follow('link1')
+    .getResource();
+    request.result.then(successCallback1, errorCallback1);
+    request.continue().then(function(nextBuilder) {
+      var request1 = nextBuilder.newRequest();
+      var request2 = nextBuilder.newRequest();
+      request1
+      .follow('link2')
+      .getResource()
+      .result
+      .then(successCallback3, errorCallback3);
+      request2
+      .follow('link2', 'link3')
+      .getResource()
+      .result
+      .then(successCallback4, errorCallback4);
+    });
+    waitFor(
+      function() {
+        console.log('successCallback1.called', successCallback1.called);
+        console.log('successCallback3.called', successCallback3.called);
+        console.log('successCallback4.called', successCallback4.called);
+        return successCallback1.called &&
+          successCallback3.called &&
+          successCallback4.called;
+      },
+      function() {
+        expect(errorCallback1).to.not.have.been.called;
+        expect(errorCallback3).to.not.have.been.called;
+        expect(errorCallback4).to.not.have.been.called;
+        expect(successCallback1).to.have.been.calledWith(response2.doc);
+        expect(successCallback3).to.have.been.calledWith(response3.doc);
+        expect(successCallback4).to.have.been.calledWith(response4.doc);
+        expect(get.callCount).to.equal(5);
+        done();
+      }
+    );
+  });
+
+
   function defineTestsForMethod(method, body) {
 
     it('should continue with links after a no-link traversal',
@@ -197,7 +244,6 @@ describe('Continuation of traversals', function() {
           noLinksForSecondTraversal: true,
         }, done);
     });
-
   } // function defineTestsForMethod
 
   function setupMocks() {

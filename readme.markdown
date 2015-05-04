@@ -293,9 +293,11 @@ Release Notes
 
 A new version of traverson-angular is released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson.
 
-* 2.1.1 2015-04-30:
+* 2.1.2 2015-05-04 (using traverson 2.0.1):
+    * Update to Traverson 2.0.1, including a fix for issue [#11](https://github.com/basti1302/traverson-angular/issues/11) (cloning a continued traversal (via `continue`) with `newRequest`).
+* 2.1.1 2015-04-30 (using traverson 2.0.0):
     * Allow chaining .useAngularHttp() method (thanks to @joshuajabbour)
-* 2.1.0 2015-04-11:
+* 2.1.0 2015-04-11 (using traverson 2.0.0):
     * Option to use AngularJS' $http service instead of Traverson's HTTP module.
 * 2.0.0 2015-04-08:
     * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/basti1302/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
