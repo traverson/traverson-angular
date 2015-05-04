@@ -259,7 +259,7 @@ handle.result.then(successCallback, errorCallback);
 traverson-angular With Media Type Plug-Ins
 ------------------------------------------
 
-You can use all media type plug-ins that are available for Traverson with traverson angular. Here is how:
+You can use all media type plug-ins that are available for Traverson with traverson-angular. Here is how:
 
 * Make sure the JavaScript for the media type plug-in has been loaded (for example, add a script tag for traverson-hal.min.js).
 * Register the media type with a line like this: `traverson.registerMediaType(TraversonJsonHalAdapter.mediaType, TraversonJsonHalAdapter);`.
