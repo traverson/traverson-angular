@@ -19,20 +19,20 @@ if (typeof angular !== 'undefined') {
 }
 
 var traversonAngular = ng.module('traverson', []);
+var Builder = traverson._Builder;
+var originalMethods = {
+  get: Builder.prototype.get,
+  getResource: Builder.prototype.getResource,
+  getUrl: Builder.prototype.getUrl,
+  post: Builder.prototype.post,
+  put: Builder.prototype.put,
+  patch: Builder.prototype.patch,
+  delete: Builder.prototype.delete,
+};
 
 traversonAngular.factory('traverson',
   ['$q', '$httpTraversonAdapter',
     function traversonFactory($q, $httpTraversonAdapter) {
-  var Builder = traverson._Builder;
-  var originalMethods = {
-    get: Builder.prototype.get,
-    getResource: Builder.prototype.getResource,
-    getUrl: Builder.prototype.getUrl,
-    post: Builder.prototype.post,
-    put: Builder.prototype.put,
-    patch: Builder.prototype.patch,
-    delete: Builder.prototype.delete,
-  };
 
   function promisify(that, originalMethod, argsArray) {
     var deferred = $q.defer();
