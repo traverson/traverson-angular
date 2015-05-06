@@ -1,7 +1,7 @@
 {
   "name": "traverson-angular",
   "main": "browser/dist/traverson-angular.js",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "homepage": "https://github.com/basti1302/traverson-angular",
   "authors": [
     "Bastian Krol <bastian.krol@web.de>"
