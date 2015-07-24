@@ -182,8 +182,13 @@ traversonAngular.factory('$httpTraversonAdapter', [
     }
 
     function mapQuery(mappedOptions, options) {
-      if (options.query) {
-        mappedOptions.params = options.query;
+      // options.qs would be correct since we are using request/request options
+      // object API, but a previous version of traverson-angular incorrectly
+      // used options.query instead, so we allow this also, to not break
+      // backwards compatibility.
+      var qs =  options.qs || options.query;
+      if (qs) {
+        mappedOptions.params = qs;
       }
     }
 
@@ -199,8 +204,8 @@ traversonAngular.factory('$httpTraversonAdapter', [
         var username = auth.user || auth.username;
         var password = auth.pass || auth.password;
         mappedOptions.headers = mappedOptions.headers || {};
-        mappedOptions.headers.Authorization = 'Basic ' + username + ':' +
-          password;
+        mappedOptions.headers.Authorization = 'Basic ' + btoa(username + ':' +
+          password);
       }
     }
 
@@ -234,8 +239,21 @@ traversonAngular.factory('$httpTraversonAdapter', [
     }
 
     function handleError(callback) {
-      return function(err) {
-        return callback(err);
+      return function(response) {
+        if (response.status >= 100 && response.status < 600) {
+          // This happens on a completed HTTP request with a status code outside
+          // of the 2xx range. In the context of Traverson, this is not an
+          // error, in particular, if this is the last request in a traversal.
+          // Thus, we re-route it to the successCallback. Handling 4xx and 5xx
+          // errors during the traversal is the responsibility of traverson, not
+          // traverson-angular.
+           return callback(null, mapResponse(response));
+        } else {
+           // This happens on network errors, timeouts etc. In this case,
+           // AngularJS sets the status property to 0. In the context of
+           // Traverson, only these are to be interpreted as errors.
+           return callback(response);
+        }
       };
     }
 

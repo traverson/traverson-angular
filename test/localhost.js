@@ -102,6 +102,26 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
+  it('should follow a multi-element path (/w AngularJS\' $http)',
+      function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
+    .follow('second', 'doc')
+    .get()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResponseWithBody();
+        expect(resultDoc.second).to.exist;
+        expect(resultDoc.second).to.equal('document');
+        done();
+      }
+    );
+  });
+
   it('should follow a multi-element path to a resource', function(done) {
     api
     .newRequest()
@@ -120,9 +140,55 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
+  it('should follow a multi-element path to a resource (/w AngularJS\' $http)',
+      function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
+    .follow('second', 'doc')
+    .getResource()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResultDoc();
+        expect(resultDoc.second).to.exist;
+        expect(resultDoc.second).to.equal('document');
+        done();
+      }
+    );
+  });
+
   it('should authenticate', function(done) {
     api
     .newRequest()
+    .withRequestOptions({
+      auth: {
+        user: 'traverson',
+        pass: 'verysecretpassword',
+        sendImmediately: false
+      }
+    })
+    .follow('auth')
+    .getResource()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResultDoc();
+        expect(resultDoc.user).to.exist;
+        expect(resultDoc.user).to.equal('authenticated');
+        done();
+      }
+    );
+  });
+
+  it('should authenticate (/w AngularJS\' $http)', function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
     .withRequestOptions({
       auth: {
         user: 'traverson',
@@ -214,6 +280,40 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
+  // same as above (that is, a 404 *during* the traversal, which is interpreted
+  // as an error condition), this time using AngularJS' $http service
+  it('should fail gracefully on 404 during traversal ' +
+     '(get(), /w AngularJS\' $http)', function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
+    .follow('blind_alley', 'more', 'links')
+    .get()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return errorCallback.called; },
+      function() {
+        expect(successCallback.callCount).to.equal(0);
+        expect(errorCallback.callCount).to.equal(1);
+        var error = errorCallback.firstCall.args[0];
+
+        expect(error).to.exist;
+        expect(error.name).to.equal('HTTPError');
+        expect(error.message).to.equal('HTTP GET for ' + rootUri +
+            'does/not/exist' + ' resulted in HTTP status code 404.');
+        expect(error.url).to.equal(rootUri + 'does/not/exist');
+        expect(error.httpStatus).to.equal(404);
+
+        var lastBody = error.body;
+        expect(lastBody).to.exist;
+        expect(lastBody).to.contain('message');
+        expect(lastBody).to.contain('resource not found');
+        done();
+      }
+    );
+  });
+
   // this is a 404 *at the end* of the traversal, which is *not* interpreted as
   // an error condition
   it('should just deliver the last response of get(), even when the last ' +
@@ -237,7 +337,54 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
-  // 404 during traversal => error
+  // same as above, that is, a 404 *at the end* of the traversal, which is
+  // *not* interpreted as an error condition, this time using AngularJS' $http
+  // service
+  it('should just deliver the last response of get(), even when the last ' +
+      'response is a 404 (/w AngularJS\' $http)',
+      function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
+    .follow('blind_alley')
+    .get()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResponseWithBody(404);
+        expect(resultDoc).to.exist;
+        expect(resultDoc.message).to.exist;
+        expect(resultDoc.message).to.equal('resource not found');
+        done();
+      }
+    );
+  });
+
+  /*
+  it('https://github.com/basti1302/traverson-angular/issues/14',
+      function(done) {
+    traversonAngular
+    .from(rootUri)
+    .useAngularHttp()
+    .follow()
+    .post({})
+    .result
+    .then(successCallback, errorCallback);
+
+    waitFor(
+      function() { return successCallback.called || errorCallback.called; },
+      function() {
+        console.log('successCallback.called', successCallback.called);
+        console.log('errorCallback.called', errorCallback.called);
+        done();
+      }
+    );
+  });
+  */
+
+  // again, 404 during traversal => error, this time with getResouce()
   it('should fail gracefully on 404 during traversal (getResource())',
       function(done) {
     api
@@ -492,6 +639,45 @@ describe('traverson-angular (when tested against a local server)', function() {
   it('should add request options on top of each other', function(done) {
     api
     .newRequest()
+    .addRequestOptions({
+      headers: { 'Accept': 'application/json', }
+    })
+    .addRequestOptions({
+      headers: { 'X-Traverson-Test-Header': 'Traverson rocks!' }
+    })
+    .addRequestOptions({
+      qs: { 'token': 'foobar' }
+    })
+    .follow('echo-all')
+    .getResource()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResultDoc();
+        var responseAcceptHeader =
+            resultDoc.headers.Accept ||
+            resultDoc.headers.accept;
+        var responseTestHeader =
+            resultDoc.headers['X-Traverson-Test-Header'] ||
+            resultDoc.headers['x-traverson-test-header'];
+        expect(responseAcceptHeader).to.exist;
+        expect(responseAcceptHeader).to.equal('application/json');
+        expect(responseTestHeader).to.exist;
+        expect(responseTestHeader).to.equal('Traverson rocks!');
+        expect(resultDoc.query.token).to.equal('foobar');
+        done();
+      }
+    );
+  });
+
+  it(
+      'should add request options on top of each other (/w AngularJS\' $http)',
+      function(done) {
+    api
+    .newRequest()
+    .useAngularHttp()
     .addRequestOptions({
       headers: { 'Accept': 'application/json', }
     })
