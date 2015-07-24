@@ -157,6 +157,12 @@ The following action methods of the Traverson request builder return such an obj
 * `patch(payload)`
 * `delete`
 
+### How HTTP Status Code Are Handled
+
+In contrast to AngularJS' `$http` service, Traverson and traverson-angular do not interpret status codes outside of the 2xx range as an error condition. Only network problems (host not reachable, timeouts, etc.) lead to a rejection of the promise, that is, only those trigger the error callback. Completed HTTP requests, even those with status 4xx or 5xx are interpreted as a success and trigger the success callback. This applies only to the last request in a traversal, HTTP requests *during* the traversal that respond with 4xx/5xx are interpreted as an error (because the traversal can not continue).
+
+This also holds when using `.useAngularHttp()` (see below).
+
 ### Using AngularJS' $http Service Instead Of Traverson's HTTP Module
 
 Traverson has it's own HTTP module (based on [superagent](https://github.com/visionmedia/superagent)) and by default, this is used to make HTTP requests. If you want to use Traverson in a project that makes use of AngularJS' $http service and its configuration possibilities (default headers, interceptors and so on), these configurations do not apply automatically to the requests issued by Traverson. If you want that, you can configure traverson-angular to use $http instead of Traverson's HTTP module by calling `useAngularHttp()` on the request builder.
