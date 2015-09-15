@@ -249,6 +249,25 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
+  it('should follow the location header', function(done) {
+    api
+    .newRequest()
+    .follow('respond_location')
+    .followLocationHeader()
+    .follow('doc')
+    .getResource()
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResultDoc();
+        expect(resultDoc).to.eql({ second: 'document' });
+        done();
+      }
+    );
+  });
+
   // this is a 404 *during* the traversal, which is interpreted as an error
   // condition
   it('should fail gracefully on 404 during traversal (get())', function(done) {
