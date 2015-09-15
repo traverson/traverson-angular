@@ -4,7 +4,7 @@
 var chai = require('chai')
   , expect = chai.expect;
 
-describe.skip('traverson-angular using angular-mocks', function () {
+describe('traverson-angular using angular-mocks', function () {
 
   var rootUri = 'http://api.example.org';
   var httpBackend, traverson;
@@ -64,5 +64,8 @@ describe.skip('traverson-angular using angular-mocks', function () {
       });
 
     httpBackend.flush();
+    setTimeout(function() {
+      httpBackend.flush();
+    }, 0);
   });
 });
