@@ -299,7 +299,9 @@ Release Notes
 
 A new version of traverson-angular is usually released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson. Multiple versions of traverson-angular might be released that use the same version of traverson, so the actual version numbers of traverson and traverson-angular do not always match. The traverson version used in the traverson-angular release is noted for each release.
 
-* 3.0.0 2015-09-16
+* 3.1.0 2015-11-10:
+    * Update to Traverson release 3.1.0 (including `withCredentials`).
+* 3.0.0 2015-09-16:
     * Update for Traverson release 3.0.0 (including `followLocationHeader()`).
 * 2.1.4 2015-08-27 (using traverson 2.1.0):
     * Update for Traverson release 2.1.0 (including `convertResponseToObject()`).
