@@ -46,7 +46,7 @@ module.exports = function(grunt) {
         src: [ '<%= pkg.name %>.js' ],
         dest: './browser/dist/<%= pkg.name %>.js',
         options: {
-          bundleOptions: {
+          browserifyOptions: {
             standalone: '<%= pkg.name %>'
           }
         }
@@ -66,8 +66,8 @@ module.exports = function(grunt) {
         src: [ 'test/browser_suite.js' ],
         dest: './browser/test/browserified_tests.js',
         options: {
-          external: [ './<%= pkg.name %>.js' ],
-          bundleOptions: {
+          external: [ './<%= pkg.name %>.js:traverson-angular' ],
+          browserifyOptions: {
             // Embed source map for tests
             debug: true
           }
@@ -87,12 +87,12 @@ module.exports = function(grunt) {
       }
     },
 
-    'mocha_phantomjs': {
-      all: {
+    mocha: {
+      test: {
         options: {
-          urls: [
-            mochaPhantomJsTestRunner
-          ]
+          urls: [ mochaPhantomJsTestRunner ],
+          timeout: 20000,
+          reporter: 'spec',
         }
       }
     },
@@ -107,7 +107,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-mocha-phantomjs');
+  grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
   grunt.registerTask('start-test-server', 'Start the test server.',
@@ -183,7 +183,7 @@ module.exports = function(grunt) {
     'browserify',
     'uglify',
     'start-test-server',
-    'mocha_phantomjs',
+    'mocha',
     'stop-test-server'
   ]);
 };
