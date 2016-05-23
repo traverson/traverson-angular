@@ -51,7 +51,7 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-mocha": "^1.0.2",
     "load-grunt-tasks": "^3.5.0",
-    "mocha": "^2.4.5",
+    "mocha": "^2.5.0",
     "poll-forever": "^1.0.0",
     "request": "^2.49.0",
     "sinon": "^1.9.1",
