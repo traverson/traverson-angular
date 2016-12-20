@@ -59,7 +59,9 @@ traversonAngular.factory('traverson',
       deferred.promise.then(function() {
         deferredContinue.resolve(traversal.continue());
       }, function() {
-        throw new Error('Can\'t continue from a broken traversal.');
+        var error = new Error('Can\'t continue from a broken traversal.');
+        error.name = 'InvalidStateError';
+        throw error;
       });
       return deferredContinue.promise;
     }
@@ -275,7 +277,9 @@ AbortHandle.prototype.abort = function() {
 
 AbortHandle.prototype.on = function(event, fn) {
   if (event !== 'abort') {
-    throw new Error('Event ' + event + ' not supported');
+    var error = new Error('Event ' + event + ' not supported');
+    error.name = 'InvalidArgumentError';
+    throw error;
   }
   this.listeners.push(fn);
 };
