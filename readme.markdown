@@ -299,6 +299,9 @@ Release Notes
 
 A new version of traverson-angular is usually released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson. Multiple versions of traverson-angular might be released that use the same version of traverson, so the actual version numbers of traverson and traverson-angular do not always match. The traverson version used in the traverson-angular release is noted for each release.
 
+* 5.0.0 2016-12-20:
+    * Update to Traverson release 5.0.0.
+    * See [Traverson's release notes](https://github.com/basti1302/traverson/blob/master/release-notes.markdown)
 * 3.1.1 2015-12-21:
     * Update to Traverson release 3.1.1, including an update from JSONPath 0.10 to jsonpath-plus 0.13. (Fixes [#20](https://github.com/basti1302/traverson-angular/issues/20).)
 * 3.1.0 2015-11-10:

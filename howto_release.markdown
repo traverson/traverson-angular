@@ -7,7 +7,7 @@ To release version x.y.z:
 - npm i
 - bump version in package.json to x.y.z (should match the used traverson version, at least the major and minor number)
 - bump version in bower.json to x.y.z
-- `grunt` (to create a fresh browser build, also make sure all tests pass etc.)
+- `npm run build` (to create a fresh browser build, also make sure all tests pass etc.)
 - First release? Then `bower register package-name git://github.com/user/repo.git`
 - `git commit -am"release x.y.z" && git push`
 - `npm publish`
