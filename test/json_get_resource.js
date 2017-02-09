@@ -46,7 +46,8 @@ describe('traverson-angular', function() {
       .getResource()
       .result
       .then(successCallback, errorCallback);
-      expect(get).to.have.been.calledWith(rootUri, {}, sinon.match.func);
+      expect(get).to.have.been.calledWith(
+        rootUri, sinon.match.any, sinon.match.func);
     });
 
     it('should call successCallback with the root doc', function(done) {
@@ -91,10 +92,10 @@ describe('traverson-angular', function() {
 
     it('should follow a single element path', function(done) {
       get
-      .withArgs(rootUri, {}, sinon.match.func)
+      .withArgs(rootUri, sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null, rootResponse);
       get
-      .withArgs(rootUri + '/link/to/thing', {}, sinon.match.func)
+      .withArgs(rootUri + '/link/to/thing', sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null, result);
 
       api
@@ -116,10 +117,10 @@ describe('traverson-angular', function() {
 
     it('should follow a single element path as array', function(done) {
       get
-      .withArgs(rootUri, {}, sinon.match.func)
+      .withArgs(rootUri, sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null, rootResponse);
       get
-      .withArgs(rootUri + '/link/to/thing', {}, sinon.match.func)
+      .withArgs(rootUri + '/link/to/thing', sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null, result);
 
       api
@@ -142,7 +143,7 @@ describe('traverson-angular', function() {
     it('should call errorCallback with err if link is not found',
         function(done) {
       get
-      .withArgs(rootUri, {}, sinon.match.func)
+      .withArgs(rootUri, sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null, rootResponse);
 
       api
@@ -170,11 +171,11 @@ describe('traverson-angular', function() {
       var err = new Error('test error');
 
       get
-      .withArgs(rootUri, {}, sinon.match.func)
+      .withArgs(rootUri, sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, null,
         mockResponse({ firstLink: rootUri + '/first' }));
       get
-      .withArgs(rootUri + '/first', {}, sinon.match.func)
+      .withArgs(rootUri + '/first', sinon.match.any, sinon.match.func)
       .callsArgWithAsync(2, err);
 
       api

@@ -49,10 +49,10 @@ describe('Aborting', function() {
     get.returns(new RequestMock());
 
     get
-    .withArgs(rootUri, {}, sinon.match.func)
+    .withArgs(rootUri, sinon.match.any, sinon.match.func)
     .callsArgWithAsync(2, null, root);
     var secondGet = get
-    .withArgs(path1, {}, sinon.match.func);
+    .withArgs(path1, sinon.match.any, sinon.match.func);
     secondGet
     .callsArgWithAsync(2, null, response2);
 
