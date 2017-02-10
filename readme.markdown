@@ -299,6 +299,8 @@ Release Notes
 
 A new version of traverson-angular is usually released for each new version of Traverson. Since traverson-angular is just a wrapper around Traverson, the release notes will often only just reference the release notes of Traverson. Multiple versions of traverson-angular might be released that use the same version of traverson, so the actual version numbers of traverson and traverson-angular do not always match. The traverson version used in the traverson-angular release is noted for each release.
 
+* 6.0.0 2017-02-10:
+    * Update to Traverson release 6.0.1 (including auto headers).
 * 5.0.0 2016-12-20:
     * Update to Traverson release 5.0.0.
     * See [Traverson's release notes](https://github.com/basti1302/traverson/blob/master/release-notes.markdown)
