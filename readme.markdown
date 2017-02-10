@@ -11,8 +11,8 @@ AngularJS integration for Traverson, the JS Hypermedia Client
 
 | File Size (browser build) | KB |
 |---------------------------|---:|
-| minified & gzipped        | 12 |
-| minified                  | 38 |
+| minified & gzipped        | 19 |
+| minified                  | 66 |
 
 Introduction
 ------------
