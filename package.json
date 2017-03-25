@@ -2,7 +2,7 @@
   "name": "traverson-angular",
   "version": "6.0.0",
   "description": "AngularJS adapter for Traverson",
-  "repository": "https://github.com/basti1302/traverson-angular.git",
+  "repository": "https://github.com/traverson/traverson-angular.git",
   "main": "traverson-angular.js",
   "author": {
     "name": "Bastian Krol",

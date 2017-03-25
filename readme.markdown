@@ -4,8 +4,8 @@ traverson-angular
 AngularJS integration for Traverson, the JS Hypermedia Client
 -------------------------------------------------------------
 
-[![Build Status](https://travis-ci.org/basti1302/traverson-angular.png?branch=master)](https://travis-ci.org/basti1302/traverson-angular)
-[![Dependency Status](https://david-dm.org/basti1302/traverson-angular.png)](https://david-dm.org/basti1302/traverson-angular)
+[![Build Status](https://travis-ci.org/traverson/traverson-angular.png?branch=master)](https://travis-ci.org/traverson/traverson-angular)
+[![Dependency Status](https://david-dm.org/traverson/traverson-angular.png)](https://david-dm.org/traverson/traverson-angular)
 
 [![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/)
 
@@ -17,7 +17,7 @@ AngularJS integration for Traverson, the JS Hypermedia Client
 Introduction
 ------------
 
-traverson-angular offers seamless integration of [Traverson](https://github.com/basti1302/traverson) with AngularJS. Traverson comes in handy when consuming REST APIs that follow the HATEOAS principle, that is, REST APIs that have links between their resources. If you don't know Traverson, you should probably have a look at its [GitHub page](https://github.com/basti1302/traverson) or at this [introductory blog post](https://blog.codecentric.de/en/2013/11/traverson/) first.
+traverson-angular offers seamless integration of [Traverson](https://github.com/traverson/traverson) with AngularJS. Traverson comes in handy when consuming REST APIs that follow the HATEOAS principle, that is, REST APIs that have links between their resources. If you don't know Traverson, you should probably have a look at its [GitHub page](https://github.com/traverson/traverson) or at this [introductory blog post](https://blog.codecentric.de/en/2013/11/traverson/) first.
 
 traverson-angular wraps Traverson in an AngularJS module and converts the original callback based API into an API based on promises.
 
@@ -30,7 +30,7 @@ See [below](#using-npm-and-browserify).
 
 ### Download
 
-You can grab a download from the [latest release](https://github.com/basti1302/traverson-angular/releases/latest). All downloads include traverson-angular and a bundled Traverson library, so you do not need to include Traverson separately. Here are your options:
+You can grab a download from the [latest release](https://github.com/traverson/traverson-angular/releases/latest). All downloads include traverson-angular and a bundled Traverson library, so you do not need to include Traverson separately. Here are your options:
 
 * `traverson-angular.min.js`: Minified build with UMD. This build can be used with a script tag or with an AMD loader like RequireJS (untested). It will register the AngularJS module `traverson`, which you can use as a dependency of your module (see below). **If in doubt, use this build.**
 * `traverson-angular.js`: Non-minified build with UMD. Same as above, just larger.
@@ -56,8 +56,8 @@ angular.module('my-app').service('apiService', function(traverson) {
 
 Have a look at the examples in the repository:
 
-* [Example 1](https://github.com/basti1302/traverson-angular/blob/master/browser/example/index.html) ([JavaScript here](https://github.com/basti1302/traverson-angular/blob/master/browser/example/traverson-angular-example.js))
-* [GitHub API example](https://github.com/basti1302/traverson-angular/blob/master/browser/example/github.html) ([JavaScript here](https://github.com/basti1302/traverson-angular/blob/master/browser/example/github-example.js))
+* [Example 1](https://github.com/traverson/traverson-angular/blob/master/browser/example/index.html) ([JavaScript here](https://github.com/traverson/traverson-angular/blob/master/browser/example/traverson-angular-example.js))
+* [GitHub API example](https://github.com/traverson/traverson-angular/blob/master/browser/example/github.html) ([JavaScript here](https://github.com/traverson/traverson-angular/blob/master/browser/example/github-example.js))
 
 Using npm and Browserify
 ------------------------
@@ -78,7 +78,7 @@ app.service('apiService', function(traverson) {
 
 ```
 
-See [here](https://github.com/basti1302/traverson-angular/tree/master/browser/example/browserify) for a complete, working example of a CommonJS based AngularJS app using traverson-angular, build with Browserify.
+See [here](https://github.com/traverson/traverson-angular/tree/master/browser/example/browserify) for a complete, working example of a CommonJS based AngularJS app using traverson-angular, build with Browserify.
 
 To `require` angular-core like this, you need a shim in your package.json, like this:
 
@@ -107,7 +107,7 @@ Browserify your app as usual - Browserify will include traverson-angular, Traver
 API
 ---
 
-You should refer to [Traverson's docs](https://github.com/basti1302/traverson/blob/master/readme.markdown) for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
+You should refer to [Traverson's docs](https://github.com/traverson/traverson/blob/master/readme.markdown) for general info how to work with Traverson. Anything that works with Taverson also works with traverson-angular. The only difference is that traverson-angular's methods are not callback-based but work with promises.
 
 So this code, which uses Traverson directly:
 <pre lang="javascript">
@@ -184,9 +184,9 @@ traverson
 
 ### Continuing a Link Traversal
 
-See [Traverson's README](https://github.com/basti1302/traverson#continuing-a-link-traversal) for a general description of the `continue()` feature. This section just describes how to use it with traverson-angular.
+See [Traverson's README](https://github.com/traverson/traverson#continuing-a-link-traversal) for a general description of the `continue()` feature. This section just describes how to use it with traverson-angular.
 
-The object returned by the action methods (`get`, `getResource`, `getUrl`, `post`, `put`, `patch`, `delete`) have a property `continue` which is a function that can be used to obtain a promise that is resolved when the link traversal finishes (as does the `result` promise) and which gives you a request builder instance that starts at the last URL/resource of the finished link traversal. It can be used just as the standard [request builder](https://github.com/basti1302/traverson/blob/master/api.markdown#request-builder). That is, it has the same configuration and action methods. It enables you to continue the link traversal from the last target resource and follow more links from there.
+The object returned by the action methods (`get`, `getResource`, `getUrl`, `post`, `put`, `patch`, `delete`) have a property `continue` which is a function that can be used to obtain a promise that is resolved when the link traversal finishes (as does the `result` promise) and which gives you a request builder instance that starts at the last URL/resource of the finished link traversal. It can be used just as the standard [request builder](https://github.com/traverson/traverson/blob/master/api.markdown#request-builder). That is, it has the same configuration and action methods. It enables you to continue the link traversal from the last target resource and follow more links from there.
 
 So while with plain vanilla Traverson (not traverson-angular) you would continue a successful link traversal process like this:
 
@@ -272,7 +272,7 @@ You can use all media type plug-ins that are available for Traverson with traver
 * If necessary force Traverson to use the media type in question with `setMediaType(...)` (for HAL, you can use the convenience method `.jsonHal()` instead).
 * If necessary, add Accept headers so your server knows you want to receive a particular media type. Example: `.withRequestOptions({ headers: { 'accept': 'application/hal+json' } })`.
 
-Here is a snippet outlining how to use traverson-angular with [traverson-hal](https://github.com/basti1302/traverson-hal):
+Here is a snippet outlining how to use traverson-angular with [traverson-hal](https://github.com/traverson/traverson-hal):
 
 ```html
 <script src="traverson-angular.min.js"></script>
@@ -292,7 +292,7 @@ traverson
 .then(...);
 ```
 
-You can find a complete working example for integrating traverson-hal with traverson-anglar in [browser/example/hal.html](https://github.com/basti1302/traverson-angular/blob/master/browser/example/hal.html) and [browser/example/hal.js](https://github.com/basti1302/traverson-angular/blob/master/browser/example/hal.js).
+You can find a complete working example for integrating traverson-hal with traverson-anglar in [browser/example/hal.html](https://github.com/traverson/traverson-angular/blob/master/browser/example/hal.html) and [browser/example/hal.js](https://github.com/traverson/traverson-angular/blob/master/browser/example/hal.js).
 
 Release Notes
 -------------
@@ -303,9 +303,9 @@ A new version of traverson-angular is usually released for each new version of T
     * Update to Traverson release 6.0.1 (including auto headers).
 * 5.0.0 2016-12-20:
     * Update to Traverson release 5.0.0.
-    * See [Traverson's release notes](https://github.com/basti1302/traverson/blob/master/release-notes.markdown)
+    * See [Traverson's release notes](https://github.com/traverson/traverson/blob/master/release-notes.markdown)
 * 3.1.1 2015-12-21:
-    * Update to Traverson release 3.1.1, including an update from JSONPath 0.10 to jsonpath-plus 0.13. (Fixes [#20](https://github.com/basti1302/traverson-angular/issues/20).)
+    * Update to Traverson release 3.1.1, including an update from JSONPath 0.10 to jsonpath-plus 0.13. (Fixes [#20](https://github.com/traverson/traverson-angular/issues/20).)
 * 3.1.0 2015-11-10:
     * Update to Traverson release 3.1.0 (including `withCredentials`).
 * 3.0.0 2015-09-16:
@@ -313,31 +313,31 @@ A new version of traverson-angular is usually released for each new version of T
 * 2.1.4 2015-08-27 (using traverson 2.1.0):
     * Update for Traverson release 2.1.0 (including `convertResponseToObject()`).
 * 2.1.3 2015-05-07 (using traverson 2.0.1):
-    * Enable projects that depend on traverson-angular to use angular-mocks to test traverson-angular related code ([#12](https://github.com/basti1302/traverson-angular/issues/12), thanks to @meyertee)
+    * Enable projects that depend on traverson-angular to use angular-mocks to test traverson-angular related code ([#12](https://github.com/traverson/traverson-angular/issues/12), thanks to @meyertee)
 * 2.1.2 2015-05-04 (using traverson 2.0.1):
-    * Update to Traverson 2.0.1, including a fix for issue [#11](https://github.com/basti1302/traverson-angular/issues/11) (cloning a continued traversal (via `continue`) with `newRequest`).
+    * Update to Traverson 2.0.1, including a fix for issue [#11](https://github.com/traverson/traverson-angular/issues/11) (cloning a continued traversal (via `continue`) with `newRequest`).
 * 2.1.1 2015-04-30 (using traverson 2.0.0):
     * Allow chaining .useAngularHttp() method (thanks to @joshuajabbour)
 * 2.1.0 2015-04-11 (using traverson 2.0.0):
     * Option to use AngularJS' $http service instead of Traverson's HTTP module.
 * 2.0.0 2015-04-08:
-    * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/basti1302/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/basti1302/traverson/blob/master/api.markdown#traversal-continue)).
+    * [Continue link traversals](#continuing-a-link-traversal) with `continue()` (also see [Traverson's docs](https://github.com/traverson/traverson#continuing-a-link-traversal) and [Traverson's API docs](https://github.com/traverson/traverson/blob/master/api.markdown#traversal-continue)).
     * The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` was deprecated in version 1.1.0 and has been removed with this version.
 * 1.2.1 2015-03-16:
     * Bugfix: fix `getUri` alias for `getUrl`.
 * 1.2.0 2015-03-15:
-    * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
+    * See [Traverson's release notes](https://github.com/traverson/traverson#release-notes)
     * The method `getUri` has been renamed to `getUrl`. `getUri` is now deprecated, but is kept as an alias for `getUrl`.
 * 1.1.0 2015-03-03:
-    * See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
+    * See [Traverson's release notes](https://github.com/traverson/traverson#release-notes)
     * The new feature to abort a link traversal process made it necessary to change the API: The action methods (`get`, `getResource`, `post`, ...) now return an object which has the property `result` which is the promise which had been returned directly until version 1.0.1. Thus, `getResource().then(...)` becomes `getResource().result.then(...)`. The old syntax `getResource().then(...)` still works for now, but is deprecated and will be removed in version 2.0.0.
 * 1.0.1 2015-03-02:
     * Use minification-proof array notation (#5, #6) (thanks to @jamiegaines)
 * 1.0.0 2015-02-27:
     * Fixed humongous bug that only allowed GET requests but thwarted POST, PUT, PATCH and DELETE requests (#2 and #4) (thanks to @binarykitchen).
-    * Traverson 1.0.0 contains a lot of changes, even some breaking changes regarding HAL. See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes).
-* 0.15.0 2014-12-06: See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
-* 0.14.0 2014-12-05: See [Traverson's release notes](https://github.com/basti1302/traverson#release-notes)
+    * Traverson 1.0.0 contains a lot of changes, even some breaking changes regarding HAL. See [Traverson's release notes](https://github.com/traverson/traverson#release-notes).
+* 0.15.0 2014-12-06: See [Traverson's release notes](https://github.com/traverson/traverson#release-notes)
+* 0.14.0 2014-12-05: See [Traverson's release notes](https://github.com/traverson/traverson#release-notes)
 * 0.13.0 2014-12-01
    * Reduce size of browser build by 33%. The minified version now has 37k instead of 55k (still too much, but also much better than before)
 * 0.12.0 2014-11-29:

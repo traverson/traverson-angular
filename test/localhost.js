@@ -382,7 +382,7 @@ describe('traverson-angular (when tested against a local server)', function() {
   });
 
   /*
-  it('https://github.com/basti1302/traverson-angular/issues/14',
+  it('https://github.com/traverson/traverson-angular/issues/14',
       function(done) {
     traversonAngular
     .from(rootUri)
