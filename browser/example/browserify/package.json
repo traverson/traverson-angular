@@ -12,13 +12,13 @@
   "dependencies": {
     "angular": "^1.3.4",
     "angular-sanitize": "^1.3.4",
-    "traverson-angular": "^1.0.0",
-    "traverson-hal": "^1.0.0"
+    "traverson-angular": "^6.0.0",
+    "traverson-hal": "^6.0.2"
   },
   "browser": {
     "angular": "./angular/angular-common-js.js"
   },
   "devDependencies": {
-    "browserify": "^6.3.3"
+    "browserify": "^16.2.2"
   }
 }
