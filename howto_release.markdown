@@ -6,6 +6,7 @@ To release version x.y.z:
 - bump version of traverson in package.json
 - npm i
 - bump version in package.json to x.y.z (should match the used traverson version, at least the major and minor number)
+- bump version in package-lock.json to x.y.z (should match the used traverson version, at least the major and minor number)
 - bump version in bower.json to x.y.z
 - `npm run build` (to create a fresh browser build, also make sure all tests pass etc.)
 - First release? Then `bower register package-name git://github.com/user/repo.git`

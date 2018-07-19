@@ -1,6 +1,6 @@
 {
   "name": "traverson-angular",
-  "version": "6.0.0",
+  "version": "6.0.1",
   "description": "AngularJS adapter for Traverson",
   "repository": "https://github.com/traverson/traverson-angular.git",
   "main": "traverson-angular.js",
@@ -34,7 +34,7 @@
     "AngularJS"
   ],
   "dependencies": {
-    "traverson": "^6.0.3"
+    "traverson": "^6.0.4"
   },
   "devDependencies": {
     "angular": "^1.6.6",
@@ -54,7 +54,7 @@
     "load-grunt-tasks": "^4.0.0",
     "mocha": "^5.2.0",
     "poll-forever": "^1.0.0",
-    "request": "^2.83.0",
+    "request": "^2.87.0",
     "sinon": "^6.1.3",
     "sinon-chai": "^3.2.0",
     "traverson-mock-response": "1.1.0",
