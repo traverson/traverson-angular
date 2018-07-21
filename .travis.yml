@@ -1,6 +1,23 @@
----
 language: node_js
+
 node_js:
-  - '7'
+- '6'
+- '7'
+- '8'
+- '9'
+- '10'
 
 sudo: false
+
+# allow greenkeeper to commit package-lock.json
+before_install:
+# package-lock.json was introduced in npm@5
+- '[[ $(node -v) =~ ^v9.*$ ]] || npm install -g npm@latest' # skipped when using node 9
+- npm install -g greenkeeper-lockfile
+install: npm install
+before_script: greenkeeper-lockfile-update
+after_script: greenkeeper-lockfile-upload
+
+env:
+  global:
+    secure: CvWvWn6pDIBUUdi3gVmvLSbgojqqG0NDhKQv9k6dg4U/1wUT0nhaiFsQAeCiFxCv6fclMA/oLhz4O6TUMBDXLUGXrKixu5Nk4kzrIthjbbukXoZ4K//3H/r9M3Zas21StS25dMszryhcvH5CbnO4DQqaV5cXlg9uyVru3k97q4U=
