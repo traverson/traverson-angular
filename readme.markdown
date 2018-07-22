@@ -6,8 +6,8 @@ AngularJS integration for Traverson, the JS Hypermedia Client
 
 [![Build Status](https://travis-ci.org/traverson/traverson-angular.png?branch=master)](https://travis-ci.org/traverson/traverson-angular)
 [![Dependency Status](https://david-dm.org/traverson/traverson-angular.png)](https://david-dm.org/traverson/traverson-angular)
-
-[![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/) [![Greenkeeper badge](https://badges.greenkeeper.io/traverson/traverson-angular.svg)](https://greenkeeper.io/)
+[![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/)
+[![Greenkeeper badge](https://badges.greenkeeper.io/traverson/traverson-angular.svg)](https://greenkeeper.io/)
 
 | File Size (browser build) | KB |
 |---------------------------|---:|
