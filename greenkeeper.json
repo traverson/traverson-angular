@@ -2,9 +2,9 @@
   "groups": {
     "default": {
       "packages": [
-        "browser/example/browserify/package.json",
         "package.json"
       ]
     }
-  }
+  },
+  "ignore": ["load-grunt-tasks"]
 }
