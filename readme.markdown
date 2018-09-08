@@ -305,7 +305,7 @@ A new version of traverson-angular is usually released for each new version of T
     * Update to Traverson release 6.0.1 (including auto headers).
 * 5.0.0 2016-12-20:
     * Update to Traverson release 5.0.0.
-    * See [Traverson's release notes](https://github.com/traverson/traverson/blob/master/release-notes.markdown)
+    * See [Traverson's release notes](https://github.com/traverson/traverson/blob/master/CHANGELOG.md)
 * 3.1.1 2015-12-21:
     * Update to Traverson release 3.1.1, including an update from JSONPath 0.10 to jsonpath-plus 0.13. (Fixes [#20](https://github.com/traverson/traverson-angular/issues/20).)
 * 3.1.0 2015-11-10:
