@@ -294,10 +294,24 @@ traverson
 
 You can find a complete working example for integrating traverson-hal with traverson-anglar in [browser/example/hal.html](https://github.com/traverson/traverson-angular/blob/master/browser/example/hal.html) and [browser/example/hal.js](https://github.com/traverson/traverson-angular/blob/master/browser/example/hal.js).
 
+
+Contributing
+------------
+
+See [Contributing to traverson-angular](https://github.com/traverson/traverson-angular/blob/master/CONTRIBUTING.md).
+
+
+Code of Conduct
+---------------
+
+See [Code of Conduct](https://github.com/traverson/traverson-angular/blob/master/CODE_OF_CONDUCT.md).
+
+
 Release Notes
 -------------
 
 See [CHANGELOG](https://github.com/traverson/traverson-angular/blob/master/CHANGELOG.md).
+
 
 License
 -------
