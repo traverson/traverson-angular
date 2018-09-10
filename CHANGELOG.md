@@ -46,3 +46,5 @@ Release Notes
     * Update to Traverson release 6.0.1 (including auto headers).
 * 6.0.1 2018-07-19:
     * Update to Traverson release 6.0.4.
+* 6.1.0 2018-09-10:
+    * Update to Traverson release 6.1.0.
