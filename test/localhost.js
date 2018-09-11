@@ -632,6 +632,38 @@ describe('traverson-angular (when tested against a local server)', function() {
     );
   });
 
+  it('should use provided request options (/w AngularJS\' $http)',
+      function(done) {
+    var payload = {'updated': 'document'};
+    api
+    .newRequest()
+    .follow('put_link')
+    .useAngularHttp()
+    .withRequestOptions({
+      headers: {
+        'Content-Type': 'application/json',
+        'If-Match': 'something'
+      }
+    })
+    .put(payload)
+    .result
+    .then(successCallback, errorCallback);
+    waitFor(
+      function() { return successCallback.called; },
+      function() {
+        var resultDoc = checkResponseWithBody();
+        expect(resultDoc.document).to.exist;
+        expect(resultDoc.document).to.equal('overwritten');
+        expect(resultDoc.received).to.exist;
+        expect(resultDoc.received).to.deep.equal(payload);
+        expect(resultDoc.headers).to.exist;
+        expect(resultDoc.headers['content-type']).to.equal('application/json');
+        expect(resultDoc.headers['if-match']).to.equal('something');
+        done();
+      }
+    );
+  });
+
   it('should use provided query string options', function(done) {
     api
     .newRequest()
