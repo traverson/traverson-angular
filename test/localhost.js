@@ -285,7 +285,7 @@ describe('traverson-angular (when tested against a local server)', function() {
         var error = errorCallback.firstCall.args[0];
         expect(error).to.exist;
         expect(error.name).to.equal('HTTPError');
-        expect(error.message).to.equal('HTTP GET for ' + rootUri +
+        expect(error.message).to.equal('HTTP GET request to ' + rootUri +
             'does/not/exist' + ' resulted in HTTP status code 404.');
         expect(error.url).to.equal(rootUri + 'does/not/exist');
         expect(error.httpStatus).to.equal(404);
@@ -319,7 +319,7 @@ describe('traverson-angular (when tested against a local server)', function() {
 
         expect(error).to.exist;
         expect(error.name).to.equal('HTTPError');
-        expect(error.message).to.equal('HTTP GET for ' + rootUri +
+        expect(error.message).to.equal('HTTP GET request to ' + rootUri +
             'does/not/exist' + ' resulted in HTTP status code 404.');
         expect(error.url).to.equal(rootUri + 'does/not/exist');
         expect(error.httpStatus).to.equal(404);
@@ -418,7 +418,7 @@ describe('traverson-angular (when tested against a local server)', function() {
         var error = errorCallback.firstCall.args[0];
         expect(error).to.exist;
         expect(error.name).to.equal('HTTPError');
-        expect(error.message).to.equal('HTTP GET for ' + rootUri +
+        expect(error.message).to.equal('HTTP GET request to ' + rootUri +
             'does/not/exist' + ' resulted in HTTP status code 404.');
         expect(error.url).to.equal(rootUri + 'does/not/exist');
         expect(error.httpStatus).to.equal(404);
