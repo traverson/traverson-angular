@@ -58,7 +58,7 @@
     "grunt-contrib-uglify": "^4.0.0",
     "grunt-contrib-watch": "^1.0.0",
     "grunt-mocha": "^1.0.4",
-    "husky": "^1.0.0-rc.13",
+    "husky": "^4.1.0",
     "load-grunt-tasks": "^3.5.2",
     "mocha": "^5.2.0",
     "poll-forever": "^1.0.0",
