@@ -3,6 +3,9 @@
   "version": "6.1.0",
   "description": "AngularJS adapter for Traverson",
   "repository": "https://github.com/traverson/traverson-angular.git",
+  "engines": {
+    "node": ">= 10"
+  },
   "main": "traverson-angular.js",
   "author": {
     "name": "Bastian Krol",
