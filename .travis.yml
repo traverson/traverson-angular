@@ -1,7 +1,7 @@
 version: ~> 1.0
 
 import:
-  - form8ion/.travi-ci:node.yml
+  - form8ion/.travis-ci:node.yml
   - traverson/.travis-ci:authenticated-semantic-release-stage.yml
 
 node_js:
