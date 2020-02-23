@@ -37,10 +37,6 @@ You can grab a download from the [latest release](https://github.com/traverson/t
 * `traverson.external.min.js`: Minified require/external build. Created with browserify's `--require` parameter and intended to be used (required) from other browserified modules, which were created with `--external traverson-angular`. This build could be used if you use browserify but do not want to bundle traverson-angular and Traverson with your own browserify build but keep it as a separate file.
 * `traverson.external.js`: Non-minified require/external build, same as before, just larger.
 
-### Bower
-
-`bower install traverson-angular --save`
-
 Usage
 -----
 
