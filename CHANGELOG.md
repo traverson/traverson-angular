@@ -1,3 +1,15 @@
+# [7.0.0-alpha.2](https://github.com/traverson/traverson-angular/compare/v7.0.0-alpha.1...v7.0.0-alpha.2) (2020-02-23)
+
+
+### chore
+
+* **bower:** dropped support for bower ([25592c1](https://github.com/traverson/traverson-angular/commit/25592c139334d691c2040547d9238de301df30f2))
+
+
+### BREAKING CHANGES
+
+* **bower:** Bower is no longer supported
+
 Release Notes
 -------------
 
