@@ -7,6 +7,9 @@
     "node": ">= 10"
   },
   "main": "traverson-angular.js",
+  "files": [
+    "traverson-angular.js"
+  ],
   "author": {
     "name": "Bastian Krol",
     "email": "bastian.krol@web.de"
