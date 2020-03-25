@@ -24,7 +24,8 @@
   "license": "MIT",
   "scripts": {
     "test": "grunt",
-    "build": "grunt"
+    "build": "grunt build",
+    "prepack": "npm run build"
   },
   "config": {
     "commitizen": {
