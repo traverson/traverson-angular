@@ -1,3 +1,16 @@
+# [7.0.0-alpha.3](https://github.com/traverson/traverson-angular/compare/v7.0.0-alpha.2...v7.0.0-alpha.3) (2020-03-25)
+
+
+### Build System
+
+* limited the files included to the minimum required ([39b2992](https://github.com/traverson/traverson-angular/commit/39b2992b53be37baa0fd71d746d1c101667cc05c))
+
+
+### BREAKING CHANGES
+
+* limited the published files to those used by the public api. use of private files
+could break with this change
+
 # [7.0.0-alpha.2](https://github.com/traverson/traverson-angular/compare/v7.0.0-alpha.1...v7.0.0-alpha.2) (2020-02-23)
 
 
