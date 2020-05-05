@@ -4,7 +4,7 @@ traverson-angular
 AngularJS integration for Traverson, the JS Hypermedia Client
 -------------------------------------------------------------
 
-[![Build Status](https://travis-ci.org/traverson/traverson-angular.png?branch=master)](https://travis-ci.org/traverson/traverson-angular)
+[![Build Status](https://img.shields.io/travis/com/traverson/traverson-angular.svg?branch=master)](https://travis-ci.com/traverson/traverson-angular)
 [![Dependency Status](https://david-dm.org/traverson/traverson-angular.png)](https://david-dm.org/traverson/traverson-angular)
 [![NPM](https://nodei.co/npm/traverson-angular.png?downloads=true&stars=true)](https://nodei.co/npm/traverson-angular/)
 [![Greenkeeper badge](https://badges.greenkeeper.io/traverson/traverson-angular.svg)](https://greenkeeper.io/)
@@ -36,10 +36,6 @@ You can grab a download from the [latest release](https://github.com/traverson/t
 * `traverson-angular.js`: Non-minified build with UMD. Same as above, just larger.
 * `traverson.external.min.js`: Minified require/external build. Created with browserify's `--require` parameter and intended to be used (required) from other browserified modules, which were created with `--external traverson-angular`. This build could be used if you use browserify but do not want to bundle traverson-angular and Traverson with your own browserify build but keep it as a separate file.
 * `traverson.external.js`: Non-minified require/external build, same as before, just larger.
-
-### Bower
-
-`bower install traverson-angular --save`
 
 Usage
 -----

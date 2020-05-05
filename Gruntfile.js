@@ -173,14 +173,26 @@ module.exports = function(grunt) {
     });
   });
 
-  grunt.registerTask('default', [
+  grunt.registerTask('test', [
     'jshint',
+  ]);
+
+  grunt.registerTask('test-browser', [
+    'start-test-server',
+    'mocha',
+    'stop-test-server',
+  ]);
+
+  grunt.registerTask('build', [
     'clean',
     'browserify',
     'uglify',
-    'start-test-server',
-    'mocha',
-    'stop-test-server'
+  ]);
+
+  grunt.registerTask('default', [
+    'test',
+    'build',
+    'test-browser'
   ]);
 };
 /* jshint +W106 */
