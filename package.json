@@ -60,7 +60,7 @@
     "grunt-mocha": "^1.2.0",
     "husky": "^4.2.4",
     "load-grunt-tasks": "^3.5.2",
-    "mocha": "^5.2.0",
+    "mocha": "^7.2.0",
     "poll-forever": "^1.0.0",
     "request": "^2.87.0",
     "sinon": "^9.0.1",
